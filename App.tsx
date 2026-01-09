@@ -10,6 +10,7 @@ import CalendarPage from './pages/CalendarPage';
 import SettingsPage from './pages/SettingsPage';
 import Auth from './pages/Auth';
 import TechnicalSpecs from './pages/TechnicalSpecs';
+import UpdatePassword from './pages/UpdatePassword';
 import AIChatbot from './components/AIChatbot';
 import { supabase } from './services/supabase';
 import logo from './assets/logo.png';
@@ -92,6 +93,7 @@ const Sidebar = () => {
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]); // Initialize empty, fetch from DB later
+  const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
     // Check active session
@@ -104,8 +106,10 @@ const App: React.FC = () => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true);
+      } else if (session?.user) {
         fetchProfile(session.user.id);
       } else {
         setCurrentUser(null);
@@ -204,6 +208,16 @@ const App: React.FC = () => {
   };
 
   const logout = () => setCurrentUser(null);
+
+  if (isRecovery) {
+    return (
+      <UpdatePassword onSuccess={() => {
+        setIsRecovery(false);
+        // Force reload or redirect to ensure clean state
+        window.location.hash = '';
+      }} />
+    );
+  }
 
   if (currentUser && currentUser.status !== 'active') {
     return (
