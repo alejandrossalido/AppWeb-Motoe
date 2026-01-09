@@ -100,7 +100,7 @@ const Auth: React.FC = () => {
           <h2 className="text-3xl font-black mb-2 text-white">
             {isReset ? 'Recuperar Cuenta' : isLogin ? 'Bienvenido' : 'Nuevo Miembro'}
           </h2>
-          <p className="text-gray-500 text-[10px] uppercase tracking-[0.3em] font-black">Portal de Operaciones v2.5</p>
+          <p className="text-gray-500 text-[10px] uppercase tracking-[0.3em] font-black">Portal de Operaciones v2.6 (Check)</p>
         </div>
 
         {errorMsg && (
