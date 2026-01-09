@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import { useApp } from '../App';
 import { User, Branch, Request, Role } from '../types';
+import { supabase } from '../services/supabase';
 
 const TeamMgmt: React.FC = () => {
   const { users, requests, setUsers, setRequests, currentUser, addNotification } = useApp();
@@ -12,12 +13,24 @@ const TeamMgmt: React.FC = () => {
   const [showVerify, setShowVerify] = useState(false);
   const [verifyPassword, setVerifyPassword] = useState('');
 
-  const handleApprove = (req: Request) => {
+  const handleApprove = async (req: Request) => {
+    // Update Supabase
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: 'active', role: 'member' })
+      .eq('id', req.uid);
+
+    if (error) {
+      console.error('Error approving user:', error);
+      alert('Error al aprobar usuario en la base de datos.');
+      return;
+    }
+
+    // Local State Update
     const newUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: req.uid,
       name: req.fullName,
-      email: `${req.uid}@epsamoto.es`,
-      password: '123',
+      email: `${req.uid}`, // Note: This might be inaccurate if we don't have the email in Request, but App.tsx fetches correct data on reload.
       role: 'member',
       branch: req.branch,
       subteam: req.subteam,
@@ -26,10 +39,12 @@ const TeamMgmt: React.FC = () => {
       totalCredits: 0,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${req.fullName}`
     };
+
+    // Optimistic update
     setUsers(prev => [...prev, newUser]);
     setRequests(prev => prev.filter(r => r.id !== req.id));
     addNotification('all', 'Nuevo Miembro', `${req.fullName} se ha unido al equipo ${req.branch}.`);
-    alert(`Usuario ${req.fullName} aprobado con éxito.`);
+    // alert(`Usuario ${req.fullName} aprobado con éxito.`);
   };
 
   const requestRoleUpdate = (role: Role) => {
@@ -37,9 +52,21 @@ const TeamMgmt: React.FC = () => {
     setShowVerify(true);
   };
 
-  const confirmAction = () => {
+  const confirmAction = async () => {
     // Se ha eliminado la comprobación de contraseña por petición del usuario
     if (editingUser && pendingRole) {
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: pendingRole })
+        .eq('id', editingUser.id);
+
+      if (error) {
+        console.error('Error updating role:', error);
+        alert('Error al actualizar rol en la base de datos.');
+        return;
+      }
+
       setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, role: pendingRole } : u));
       addNotification(editingUser.id, 'Cambio de Rango', `Tu rol ha sido actualizado a ${pendingRole}.`);
       setEditingUser(null);
@@ -63,9 +90,9 @@ const TeamMgmt: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-background-dark">
       <Header title="Gestión del Roster" subtitle="Miembros y Roles" />
-      
+
       <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8 custom-scroll">
-        
+
         {/* Solicitudes */}
         {requests.length > 0 && (
           <div className="space-y-4">
@@ -108,9 +135,9 @@ const TeamMgmt: React.FC = () => {
 
             <div className="flex flex-wrap gap-1.5 bg-black/20 p-1 rounded-xl w-full lg:w-fit">
               {['Todos', 'Eléctrica', 'Mecánica', 'Administración'].map(b => (
-                <button 
-                  key={b} 
-                  onClick={() => setFilter(b as any)} 
+                <button
+                  key={b}
+                  onClick={() => setFilter(b as any)}
                   className={`flex-1 lg:flex-none px-3 py-2 rounded-lg text-[9px] font-black uppercase transition-all whitespace-nowrap ${filter === b ? 'bg-primary text-black shadow-glow' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
                 >
                   {b}
@@ -137,9 +164,8 @@ const TeamMgmt: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center justify-between border-t border-white/5 pt-3">
-                  <span className={`text-[8px] font-black px-2 py-0.5 rounded border ${
-                    member.branch === 'Eléctrica' ? 'text-brand-elec border-brand-elec/30' : member.branch === 'Mecánica' ? 'text-brand-mech border-brand-mech/30' : 'text-brand-admin border-brand-admin/30'
-                  }`}>{member.branch}</span>
+                  <span className={`text-[8px] font-black px-2 py-0.5 rounded border ${member.branch === 'Eléctrica' ? 'text-brand-elec border-brand-elec/30' : member.branch === 'Mecánica' ? 'text-brand-mech border-brand-mech/30' : 'text-brand-admin border-brand-admin/30'
+                    }`}>{member.branch}</span>
                   <span className="text-[9px] text-gray-600 font-bold uppercase tracking-wider">{member.role.replace('_', ' ')}</span>
                 </div>
               </div>
@@ -195,39 +221,39 @@ const TeamMgmt: React.FC = () => {
 
       {editingUser && !showVerify && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
-           <div className="bg-card-dark border border-white/10 w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95">
-              <div className="text-center mb-8">
-                 <img src={editingUser.avatar} className="w-16 h-16 rounded-full border-2 border-primary mx-auto mb-3 object-cover" alt="p" />
-                 <h3 className="text-xl font-black text-white">{editingUser.name}</h3>
-                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{editingUser.branch}</p>
+          <div className="bg-card-dark border border-white/10 w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95">
+            <div className="text-center mb-8">
+              <img src={editingUser.avatar} className="w-16 h-16 rounded-full border-2 border-primary mx-auto mb-3 object-cover" alt="p" />
+              <h3 className="text-xl font-black text-white">{editingUser.name}</h3>
+              <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{editingUser.branch}</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Nuevo Rol para el Miembro</label>
+              <div className="grid grid-cols-2 gap-2">
+                {['member', 'team_lead', 'coordinator', 'owner'].map(r => (
+                  <button key={r} onClick={() => requestRoleUpdate(r as Role)} className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${editingUser.role === r ? 'bg-primary text-black border-primary shadow-glow' : 'bg-white/5 text-gray-500 border-white/5 hover:text-white'}`}>
+                    {r.replace('_', ' ')}
+                  </button>
+                ))}
               </div>
-              <div className="space-y-2">
-                <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Nuevo Rol para el Miembro</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['member', 'team_lead', 'coordinator', 'owner'].map(r => (
-                    <button key={r} onClick={() => requestRoleUpdate(r as Role)} className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${editingUser.role === r ? 'bg-primary text-black border-primary shadow-glow' : 'bg-white/5 text-gray-500 border-white/5 hover:text-white'}`}>
-                      {r.replace('_', ' ')}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={() => setEditingUser(null)} className="w-full mt-8 py-4 bg-white/5 text-gray-500 font-bold rounded-2xl hover:text-white transition-all text-xs uppercase tracking-widest">Cancelar</button>
-           </div>
+            </div>
+            <button onClick={() => setEditingUser(null)} className="w-full mt-8 py-4 bg-white/5 text-gray-500 font-bold rounded-2xl hover:text-white transition-all text-xs uppercase tracking-widest">Cancelar</button>
+          </div>
         </div>
       )}
 
       {showVerify && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[110] flex items-center justify-center p-6 animate-in fade-in">
           <div className="bg-card-dark border border-primary/20 w-full max-w-sm rounded-[40px] p-10 shadow-glow animate-in zoom-in-95">
-             <div className="text-center mb-8">
-                <span className="material-symbols-outlined text-primary text-4xl mb-4">security</span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tighter">Confirmar Acción</h3>
-                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-2 px-4">Haz clic en confirmar para aplicar los cambios de rango.</p>
-             </div>
-             <div className="flex flex-col gap-3 mt-8">
-               <button onClick={confirmAction} className="w-full py-4 bg-primary text-black font-black rounded-2xl uppercase text-[10px] tracking-widest shadow-glow">Confirmar</button>
-               <button onClick={() => { setShowVerify(false); }} className="w-full py-3 text-gray-500 font-bold uppercase text-[9px]">Cancelar</button>
-             </div>
+            <div className="text-center mb-8">
+              <span className="material-symbols-outlined text-primary text-4xl mb-4">security</span>
+              <h3 className="text-xl font-black text-white uppercase tracking-tighter">Confirmar Acción</h3>
+              <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-2 px-4">Haz clic en confirmar para aplicar los cambios de rango.</p>
+            </div>
+            <div className="flex flex-col gap-3 mt-8">
+              <button onClick={confirmAction} className="w-full py-4 bg-primary text-black font-black rounded-2xl uppercase text-[10px] tracking-widest shadow-glow">Confirmar</button>
+              <button onClick={() => { setShowVerify(false); }} className="w-full py-3 text-gray-500 font-bold uppercase text-[9px]">Cancelar</button>
+            </div>
           </div>
         </div>
       )}

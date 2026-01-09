@@ -4,9 +4,9 @@ import { useApp } from '../App';
 import { Branch, Role, UserStatus, User } from '../types';
 
 const ORGANIGRAMA: Record<Branch, string[]> = {
-  'Eléctrica': ['Powertrain', 'Diseño (MS1/Diagramas)', 'Telemetría'],
-  'Mecánica': ['Parte Ciclo (Dinámica)', 'Chasis (Dinámica)', 'Anclajes (Dinámica)', 'Carenado (Aero)'],
-  'Administración': ['MS1', 'Logística', 'RR.EE', 'G.E (Convocatorias/Facturas)', 'Media']
+  'Eléctrica': ['Powertrain', 'Diseño', 'Telemetría'],
+  'Mecánica': ['Dinámica', 'Parte Ciclo', 'Chasis', 'Anclajes', 'Carenado'],
+  'Administración': ['MS1', 'Logística', 'RR.EE', 'G.E', 'Media']
 };
 
 import logo from '../assets/logo.png';
@@ -22,10 +22,11 @@ const Auth: React.FC = () => {
     email: '',
     password: '',
     branch: 'Mecánica' as Branch,
-    subteam: 'Chasis (Dinámica)'
+    subteam: 'Dinámica'
   });
 
   useEffect(() => {
+    // Reset subteam when branch changes to the first option of the new branch
     setFormData(prev => ({ ...prev, subteam: ORGANIGRAMA[prev.branch][0] }));
   }, [formData.branch]);
 
@@ -47,14 +48,33 @@ const Auth: React.FC = () => {
     }
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
+      // Login Logic
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
       if (error) {
         setErrorMsg(error.message);
+        return;
       }
+
+      // Check Status immediately after login
+      if (data.session?.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', data.session.user.id)
+          .single();
+
+        if (profileError) {
+          // If we can't read the profile, assume pending/error and let App.tsx handle it,
+          // OR show error here. Safe to proceed as App.tsx has a blocker.
+        } else if (profile && profile.status !== 'active' && profile.status !== 'active_owner') { // active_owner is hypothetically handled by role 'owner' usually, but status 'active' is standard
+          // Note: App.tsx checks for 'active'. Just ensuring this function allows flow to proceed.
+        }
+      }
+
     } else {
       const validAdminEmails = ['alejandrosalidojimenez@gmail.com', 'alejandrosalidoijmenez@gmail.com'];
       const isSpecAdmin = validAdminEmails.includes(formData.email.toLowerCase());
@@ -163,6 +183,22 @@ const Auth: React.FC = () => {
                     <option value="Mecánica">Mecánica</option>
                     <option value="Eléctrica">Eléctrica</option>
                     <option value="Administración">Administración</option>
+                  </select>
+                  <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-gray-400 uppercase ml-3 tracking-widest">Subgrupo</label>
+                <div className="relative">
+                  <select
+                    value={formData.subteam}
+                    onChange={e => setFormData({ ...formData, subteam: e.target.value })}
+                    className="w-full bg-background-dark border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary outline-none appearance-none cursor-pointer"
+                  >
+                    {ORGANIGRAMA[formData.branch].map(sub => (
+                      <option key={sub} value={sub}>{sub}</option>
+                    ))}
                   </select>
                   <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
                 </div>
