@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           <MetricCard label="Horas Equipo" value={`${users.reduce((acc, u) => acc + u.totalHours, 0).toFixed(0)}h`} trend="+12%" icon="timer" color="text-primary" />
           <MetricCard label="Créditos Acum." value={users.reduce((acc, u) => acc + u.totalCredits, 0).toLocaleString()} trend="+5%" icon="stars" color="text-brand-elec" />
-          <MetricCard label="Tasks Activas" value={activeTasks.length.toString()} trend="OK" icon="assignment_late" color="text-blue-400" />
+          <MetricCard label="Tasks Activas" value={(currentUser?.role === 'coordinator' || currentUser?.role === 'owner' ? activeTasks : activeTasks.filter(t => t.branch === currentUser?.branch)).length.toString()} trend="OK" icon="assignment_late" color="text-blue-400" />
           <MetricCard label="Sesiones Hoy" value="8" trend="+2" icon="bolt" color="text-brand-admin" />
         </div>
 

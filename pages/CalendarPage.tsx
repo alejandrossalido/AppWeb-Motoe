@@ -9,14 +9,14 @@ const CalendarPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [newEvent, setNewEvent] = useState({ title: '', branch: (currentUser?.branch || 'Global') as Branch | 'Global', type: 'meeting' as any });
+  const [newEvent, setNewEvent] = useState({ title: '', branch: (currentUser?.branch || 'General') as Branch, type: 'meeting' as any });
 
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const offset = firstDay === 0 ? 6 : firstDay - 1;
-    
+
     const days = [];
     // 28 días (4 semanas exactas)
     for (let i = 0; i < 28; i++) {
@@ -37,7 +37,7 @@ const CalendarPage: React.FC = () => {
     };
     setEvents([...events, ev]);
     setShowCreateModal(false);
-    setNewEvent({ title: '', branch: (currentUser?.branch || 'Global'), type: 'meeting' });
+    setNewEvent({ title: '', branch: (currentUser?.branch || 'General'), type: 'meeting' });
     setSelectedDate(null);
   };
 
@@ -56,7 +56,7 @@ const CalendarPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-background-dark">
       <Header title="Calendario" subtitle="Eventos y Tareas del Equipo" />
-      
+
       <div className="p-4 lg:p-8 flex-1 flex flex-col overflow-hidden">
         {/* Toolbar Estilo Google */}
         <div className="flex items-center justify-between mb-6">
@@ -65,9 +65,9 @@ const CalendarPage: React.FC = () => {
               {currentMonth.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
             </h3>
             <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
-               <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-2 hover:bg-white/5 rounded-full text-gray-400"><span className="material-symbols-outlined text-[20px]">chevron_left</span></button>
-               <button onClick={() => setCurrentMonth(new Date())} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary border-x border-white/10">Hoy</button>
-               <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-2 hover:bg-white/5 rounded-full text-gray-400"><span className="material-symbols-outlined text-[20px]">chevron_right</span></button>
+              <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-2 hover:bg-white/5 rounded-full text-gray-400"><span className="material-symbols-outlined text-[20px]">chevron_left</span></button>
+              <button onClick={() => setCurrentMonth(new Date())} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary border-x border-white/10">Hoy</button>
+              <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-2 hover:bg-white/5 rounded-full text-gray-400"><span className="material-symbols-outlined text-[20px]">chevron_right</span></button>
             </div>
           </div>
           <button onClick={() => { setSelectedDate(new Date()); setShowCreateModal(true); }} className="bg-primary text-black font-black px-4 py-3 rounded-full shadow-glow flex items-center gap-2 text-[10px] uppercase tracking-widest transition-transform active:scale-95">
@@ -80,36 +80,35 @@ const CalendarPage: React.FC = () => {
           {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map(d => (
             <div key={d} className="bg-white/[0.02] p-2 text-center text-[8px] font-black text-gray-500 tracking-[0.2em] border-r border-b border-white/5">{d}</div>
           ))}
-          
-          {calendarDays.map((date, i) => {
-             const { events: dayEvents, completed, published, pending } = getDayItems(date);
-             const isToday = date.toDateString() === new Date().toDateString();
-             const totalItems = dayEvents.length + completed.length + published.length + pending.length;
 
-             return (
-               <div 
-                 key={i} 
-                 onClick={() => setSelectedDate(date)}
-                 className="min-h-[80px] lg:min-h-[120px] p-1 border-r border-b border-white/5 group cursor-pointer hover:bg-white/[0.03] transition-colors relative"
-               >
-                 <div className={`w-6 h-6 mx-auto lg:mx-0 flex items-center justify-center rounded-full text-[10px] font-black mb-1 ${isToday ? 'bg-primary text-black' : 'text-gray-500'}`}>
-                   {date.getDate()}
-                 </div>
-                 
-                 <div className="flex flex-col gap-0.5 px-0.5 overflow-hidden">
-                    {dayEvents.map(e => (
-                      <div key={e.id} className={`h-1 lg:h-auto lg:px-1.5 lg:py-0.5 rounded text-[8px] font-black uppercase truncate border border-transparent ${
-                        e.type === 'meeting' ? 'bg-primary/20 text-primary border-primary/10' : 'bg-brand-elec/20 text-brand-elec border-brand-elec/10'
+          {calendarDays.map((date, i) => {
+            const { events: dayEvents, completed, published, pending } = getDayItems(date);
+            const isToday = date.toDateString() === new Date().toDateString();
+            const totalItems = dayEvents.length + completed.length + published.length + pending.length;
+
+            return (
+              <div
+                key={i}
+                onClick={() => setSelectedDate(date)}
+                className="min-h-[80px] lg:min-h-[120px] p-1 border-r border-b border-white/5 group cursor-pointer hover:bg-white/[0.03] transition-colors relative"
+              >
+                <div className={`w-6 h-6 mx-auto lg:mx-0 flex items-center justify-center rounded-full text-[10px] font-black mb-1 ${isToday ? 'bg-primary text-black' : 'text-gray-500'}`}>
+                  {date.getDate()}
+                </div>
+
+                <div className="flex flex-col gap-0.5 px-0.5 overflow-hidden">
+                  {dayEvents.map(e => (
+                    <div key={e.id} className={`h-1 lg:h-auto lg:px-1.5 lg:py-0.5 rounded text-[8px] font-black uppercase truncate border border-transparent ${e.type === 'meeting' ? 'bg-primary/20 text-primary border-primary/10' : 'bg-brand-elec/20 text-brand-elec border-brand-elec/10'
                       }`}>
-                        <span className="hidden lg:inline">{e.title}</span>
-                      </div>
-                    ))}
-                    {totalItems > (dayEvents.length) && (
-                       <div className="w-1.5 h-1.5 rounded-full bg-gray-600 mx-auto lg:mx-0 mt-1"></div>
-                    )}
-                 </div>
-               </div>
-             );
+                      <span className="hidden lg:inline">{e.title}</span>
+                    </div>
+                  ))}
+                  {totalItems > (dayEvents.length) && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-600 mx-auto lg:mx-0 mt-1"></div>
+                  )}
+                </div>
+              </div>
+            );
           })}
         </div>
       </div>
@@ -160,7 +159,7 @@ const CalendarPage: React.FC = () => {
                 ))}
               </div>
             </div>
-            
+
             <div className="flex gap-4 mt-8">
               <button onClick={() => setShowCreateModal(true)} className="flex-1 py-4 bg-primary text-black font-black rounded-2xl uppercase text-[10px] tracking-widest shadow-glow">Añadir Evento</button>
               <button onClick={() => setSelectedDate(null)} className="flex-1 py-4 bg-white/5 text-gray-400 font-bold rounded-2xl uppercase text-[10px] tracking-widest">Cerrar</button>
@@ -177,18 +176,18 @@ const CalendarPage: React.FC = () => {
             <div className="space-y-5">
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Nombre del evento</label>
-                <input value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none text-white" placeholder="Ej: Reunión Telemetría" />
+                <input value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none text-white" placeholder="Ej: Reunión Telemetría" />
               </div>
 
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Dirigido a</label>
-                  <select 
-                    value={newEvent.branch} 
-                    onChange={e => setNewEvent({...newEvent, branch: e.target.value as any})} 
+                  <select
+                    value={newEvent.branch}
+                    onChange={e => setNewEvent({ ...newEvent, branch: e.target.value as any })}
                     className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl px-5 py-4 text-[11px] font-black uppercase outline-none text-white focus:border-primary"
                   >
-                    <option value="Global" className="bg-[#1a1a1a]">Global</option>
+                    <option value="General" className="bg-[#1a1a1a]">General</option>
                     <option value="Eléctrica" className="bg-[#1a1a1a]">Eléctrica</option>
                     <option value="Mecánica" className="bg-[#1a1a1a]">Mecánica</option>
                     <option value="Administración" className="bg-[#1a1a1a]">Administración</option>
@@ -196,9 +195,9 @@ const CalendarPage: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Tipo de evento</label>
-                  <select 
-                    value={newEvent.type} 
-                    onChange={e => setNewEvent({...newEvent, type: e.target.value as any})} 
+                  <select
+                    value={newEvent.type}
+                    onChange={e => setNewEvent({ ...newEvent, type: e.target.value as any })}
                     className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl px-5 py-4 text-[11px] font-black uppercase outline-none text-white focus:border-primary"
                   >
                     <option value="meeting" className="bg-[#1a1a1a]">Reunión</option>

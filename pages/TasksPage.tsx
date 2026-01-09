@@ -8,8 +8,11 @@ const TasksPage: React.FC = () => {
   const { tasks, setTasks, currentUser } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [targetStatus, setTargetStatus] = useState<TaskStatus>('proposed');
-  const [filter, setFilter] = useState<Branch | 'Todas'>('Todas');
-  
+
+  // Default filter: 'Todas' for global roles, else User's branch
+  const isGlobal = currentUser?.role === 'coordinator' || currentUser?.role === 'owner';
+  const [filter, setFilter] = useState<Branch | 'Todas'>(isGlobal ? 'Todas' : (currentUser?.branch || 'Todas'));
+
   const [newTask, setNewTask] = useState({
     title: '', description: '', priority: 'Media' as any, branch: currentUser?.branch || 'Mecánica', subteam: currentUser?.subteam || '', credits: 50
   });
@@ -57,12 +60,11 @@ const TasksPage: React.FC = () => {
       <div className="flex flex-col gap-4 min-w-[280px] lg:min-w-[300px] flex-1">
         <div className="flex items-center justify-between px-2 bg-white/[0.02] p-3 rounded-xl lg:bg-transparent">
           <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${
-              status === 'proposed' ? 'bg-orange-500' : 
-              status === 'available' ? 'bg-blue-500' : 
-              status === 'in_progress' ? 'bg-primary shadow-[0_0_8px_rgba(0,204,136,0.5)]' : 
-              'bg-gray-600'
-            }`}></span>
+            <span className={`w-2 h-2 rounded-full ${status === 'proposed' ? 'bg-orange-500' :
+                status === 'available' ? 'bg-blue-500' :
+                  status === 'in_progress' ? 'bg-primary shadow-[0_0_8px_rgba(0,204,136,0.5)]' :
+                    'bg-gray-600'
+              }`}></span>
             {title}
           </h3>
           <span className="text-[10px] font-black bg-white/5 px-2 py-0.5 rounded-full text-gray-400">{filtered.length}</span>
@@ -76,15 +78,14 @@ const TasksPage: React.FC = () => {
                   <span className="material-symbols-outlined text-[18px]">{task.icon}</span>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                   <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border ${
-                    task.branch === 'Eléctrica' ? 'text-brand-elec border-brand-elec/30' : task.branch === 'Mecánica' ? 'text-brand-mech border-brand-mech/30' : 'text-brand-admin border-brand-admin/30'
-                  }`}>{task.branch}</span>
-                   <span className={`text-[7px] font-bold px-1 rounded uppercase ${task.priority === 'Alta' ? 'bg-red-500/20 text-red-500' : 'bg-gray-500/20 text-gray-500'}`}>{task.priority}</span>
+                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border ${task.branch === 'Eléctrica' ? 'text-brand-elec border-brand-elec/30' : task.branch === 'Mecánica' ? 'text-brand-mech border-brand-mech/30' : 'text-brand-admin border-brand-admin/30'
+                    }`}>{task.branch}</span>
+                  <span className={`text-[7px] font-bold px-1 rounded uppercase ${task.priority === 'Alta' ? 'bg-red-500/20 text-red-500' : 'bg-gray-500/20 text-gray-500'}`}>{task.priority}</span>
                 </div>
               </div>
               <h4 className="text-sm font-bold text-white mb-1 leading-tight">{task.title}</h4>
               <p className="text-xs text-gray-500 mb-4 line-clamp-2 leading-relaxed italic">"{task.description}"</p>
-              
+
               <div className="flex items-center justify-between pt-4 border-t border-white/5">
                 <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400">
                   <span className="material-symbols-outlined text-[14px] text-primary">stars</span>
@@ -106,8 +107,8 @@ const TasksPage: React.FC = () => {
           ))}
 
           {canCreate && (
-            <button 
-              onClick={() => openCreateModal(status)} 
+            <button
+              onClick={() => openCreateModal(status)}
               className="w-full py-4 border-2 border-dashed border-white/5 rounded-2xl text-gray-600 hover:text-primary hover:border-primary/30 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
@@ -122,7 +123,7 @@ const TasksPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <Header title="Tablero Kanban" subtitle="Gestión ágil de tareas" />
-      
+
       <div className="p-4 lg:p-6 flex flex-col lg:flex-row lg:items-center justify-between border-b border-white/5 bg-background-dark gap-4">
         <div className="flex overflow-x-auto gap-2 no-scrollbar pb-2 lg:pb-0">
           {['Todas', 'Eléctrica', 'Mecánica', 'Administración'].map(b => (
@@ -145,15 +146,15 @@ const TasksPage: React.FC = () => {
           <div className="bg-card-dark border border-white/10 w-full max-w-md rounded-[40px] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
             <h3 className="text-2xl font-black mb-8 text-center">{targetStatus === 'proposed' ? 'Nueva Propuesta' : 'Publicar Tarea'}</h3>
             <div className="space-y-4">
-              <input value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none" placeholder="Nombre de la tarea" />
-              <textarea value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-5 text-sm focus:border-primary outline-none resize-none" placeholder="Descripción técnica..." />
+              <input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none" placeholder="Nombre de la tarea" />
+              <textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-5 text-sm focus:border-primary outline-none resize-none" placeholder="Descripción técnica..." />
               <div className="grid grid-cols-2 gap-4">
-                <select value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value as any})} className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none">
+                <select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })} className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none">
                   <option value="Baja">Prioridad Baja</option>
                   <option value="Media">Media</option>
                   <option value="Alta">Alta</option>
                 </select>
-                <input type="number" value={newTask.credits} onChange={e => setNewTask({...newTask, credits: parseInt(e.target.value)})} className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none" placeholder="Créditos" />
+                <input type="number" value={newTask.credits} onChange={e => setNewTask({ ...newTask, credits: parseInt(e.target.value) })} className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none" placeholder="Créditos" />
               </div>
             </div>
             <div className="flex gap-4 mt-10">

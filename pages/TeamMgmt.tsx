@@ -55,10 +55,15 @@ const TeamMgmt: React.FC = () => {
   const confirmAction = async () => {
     // Se ha eliminado la comprobación de contraseña por petición del usuario
     if (editingUser && pendingRole) {
+      const isGlobalRole = pendingRole === 'coordinator' || pendingRole === 'owner';
+      const updates = {
+        role: pendingRole,
+        ...(isGlobalRole && { branch: 'General', subteam: 'Coordinación' })
+      };
 
       const { error } = await supabase
         .from('profiles')
-        .update({ role: pendingRole })
+        .update(updates)
         .eq('id', editingUser.id);
 
       if (error) {
@@ -67,7 +72,7 @@ const TeamMgmt: React.FC = () => {
         return;
       }
 
-      setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, role: pendingRole } : u));
+      setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...updates } : u));
       addNotification(editingUser.id, 'Cambio de Rango', `Tu rol ha sido actualizado a ${pendingRole}.`);
       setEditingUser(null);
       setPendingRole(null);
@@ -134,7 +139,7 @@ const TeamMgmt: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap gap-1.5 bg-black/20 p-1 rounded-xl w-full lg:w-fit">
-              {['Todos', 'Eléctrica', 'Mecánica', 'Administración'].map(b => (
+              {['Todos', 'Eléctrica', 'Mecánica', 'Administración', 'General'].map(b => (
                 <button
                   key={b}
                   onClick={() => setFilter(b as any)}

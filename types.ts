@@ -1,6 +1,6 @@
 
 export type Role = 'owner' | 'coordinator' | 'team_lead' | 'member' | 'partner';
-export type Branch = 'Eléctrica' | 'Mecánica' | 'Administración';
+export type Branch = 'Eléctrica' | 'Mecánica' | 'Administración' | 'General';
 export type TaskStatus = 'proposed' | 'available' | 'in_progress' | 'completed';
 export type UserStatus = 'pending' | 'active' | 'rejected' | 'removed';
 
