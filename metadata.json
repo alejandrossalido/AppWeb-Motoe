@@ -1,0 +1,8 @@
+
+{
+  "name": "EPSA MOTO - Portal de Operaciones",
+  "description": "Sistema integral de gestión para el equipo EPSA MOTO. Incluye control de roles, fichaje por créditos, gestión de tareas y laboratorio de IA con Gemini 3 Pro.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
