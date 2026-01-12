@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { useApp } from '../App';
-import UpdatePassword from './UpdatePassword';
+// import UpdatePassword from './UpdatePassword'; // Removed
 import { supabase } from '../services/supabase';
 import { ORGANIGRAMA } from '../constants';
 import { Branch } from '../types';
@@ -20,6 +20,8 @@ const SettingsPage: React.FC = () => {
   const [targetScope, setTargetScope] = useState<'global' | 'branch' | 'subteam'>('branch');
   const [targetValue, setTargetValue] = useState<string>('Eléctrica');
   const [sending, setSending] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false); // New state for accordion
+
   // FCM Token Logic
   useEffect(() => {
     const registerToken = async () => {
@@ -146,8 +148,24 @@ const SettingsPage: React.FC = () => {
       alert('Notificación enviada con éxito.');
       setNotifTitle('');
       setNotifBody('');
+      setIsNotifOpen(false); // Auto close
     }
     setSending(false);
+  };
+
+  // Restored Password Reset Logic
+  const handlePasswordReset = async () => {
+    if (!currentUser?.email) return;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email, {
+      redirectTo: `${window.location.origin}/update-password`,
+    });
+
+    if (error) {
+      alert(`Error: ${error.message}`);
+    } else {
+      alert(`Se ha enviado un enlace de recuperación a ${currentUser.email}. Revisa tu bandeja de entrada (y spam).`);
+    }
   };
 
   return (
@@ -189,87 +207,107 @@ const SettingsPage: React.FC = () => {
 
         {/* Notificaciones - Solo Roles Autorizados */}
         {['owner', 'coordinator', 'team_lead'].includes(currentUser?.role || '') && (
-          <div className="bg-card-dark border border-primary/20 rounded-[32px] p-8 shadow-glow relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
-              <span className="material-symbols-outlined text-9xl text-primary">campaign</span>
-            </div>
+          <div className="bg-card-dark border border-primary/20 rounded-[32px] shadow-glow overflow-hidden transition-all duration-300">
+            {/* Header / Accordion Trigger */}
+            <button
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              className="w-full flex items-center justify-between p-8 bg-black/20 hover:bg-white/5 transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-primary text-2xl">campaign</span>
+                <h3 className="text-xl font-black text-white">Centro de Comunicaciones</h3>
+              </div>
+              <span className={`material-symbols-outlined text-gray-400 transition-transform duration-300 ${isNotifOpen ? 'rotate-180' : ''}`}>
+                keyboard_arrow_down
+              </span>
+            </button>
 
-            <h3 className="text-xl font-black text-white mb-6 flex items-center gap-3">
-              <span className="material-symbols-outlined text-primary">notifications_active</span>
-              Centro de Comunicaciones
-            </h3>
-
-            <div className="space-y-4 relative z-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Título del Mensaje</label>
-                  <input
-                    value={notifTitle}
-                    onChange={e => setNotifTitle(e.target.value)}
-                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none" placeholder="Ej: Reunión Urgente"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Alcance / Destino</label>
-                  {!isSubteamLead ? (
-                    <div className="flex gap-2">
-                      <select
-                        value={targetScope}
-                        onChange={e => setTargetScope(e.target.value as any)}
-                        className="bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none flex-1"
-                      >
-                        {availableScopes.map(s => <option key={s.value} value={s.value} className="bg-background-dark">{s.label}</option>)}
-                      </select>
-
-                      {targetScope !== 'global' && (
+            {/* Collapsible Content */}
+            <div className={`transition-all duration-300 ease-in-out ${isNotifOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+              <div className="p-8 pt-0 space-y-4 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Título del Mensaje</label>
+                    <input
+                      value={notifTitle}
+                      onChange={e => setNotifTitle(e.target.value)}
+                      className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none" placeholder="Ej: Reunión Urgente"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Alcance / Destino</label>
+                    {!isSubteamLead ? (
+                      <div className="flex gap-2">
                         <select
-                          value={targetValue}
-                          onChange={e => setTargetValue(e.target.value)}
+                          value={targetScope}
+                          onChange={e => setTargetScope(e.target.value as any)}
                           className="bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none flex-1"
                         >
-                          {getTargetOptions().map(o => <option key={o} value={o} className="bg-background-dark">{o}</option>)}
+                          {availableScopes.map(s => <option key={s.value} value={s.value} className="bg-background-dark">{s.label}</option>)}
                         </select>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 font-bold flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base">lock</span>
-                      Solo a: {currentUser?.subteam}
-                    </div>
-                  )}
+
+                        {targetScope !== 'global' && (
+                          <select
+                            value={targetValue}
+                            onChange={e => setTargetValue(e.target.value)}
+                            className="bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none flex-1"
+                          >
+                            {getTargetOptions().map(o => <option key={o} value={o} className="bg-background-dark">{o}</option>)}
+                          </select>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 font-bold flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base">lock</span>
+                        Solo a: {currentUser?.subteam}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Cuerpo del Mensaje</label>
-                <textarea
-                  value={notifBody}
-                  onChange={e => setNotifBody(e.target.value)}
-                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none h-24 resize-none" placeholder="Escribe aquí los detalles..."
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Cuerpo del Mensaje</label>
+                  <textarea
+                    value={notifBody}
+                    onChange={e => setNotifBody(e.target.value)}
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none h-24 resize-none" placeholder="Escribe aquí los detalles..."
+                  />
+                </div>
 
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={handleSendNotification}
-                  disabled={sending || !notifTitle || !notifBody}
-                  className="bg-primary text-black font-black uppercase text-xs py-3 px-8 rounded-xl hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {sending ? 'Enviando...' : 'Enviar Comunicado'}
-                  <span className="material-symbols-outlined text-sm">send</span>
-                </button>
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={handleSendNotification}
+                    disabled={sending || !notifTitle || !notifBody}
+                    className="bg-primary text-black font-black uppercase text-xs py-3 px-8 rounded-xl hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {sending ? 'Enviando...' : 'Enviar Comunicado'}
+                    <span className="material-symbols-outlined text-sm">send</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Password Update Section */}
+        {/* Security Section (Restored) */}
         <div className="bg-card-dark border border-white/5 rounded-[32px] p-8 shadow-2xl">
           <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">lock</span>
+            <span className="material-symbols-outlined text-primary">lock_reset</span>
             Seguridad
           </h3>
-          <UpdatePassword />
+
+          <div className="bg-white/5 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-white mb-1">Restablecer Contraseña</p>
+              <p className="text-xs text-gray-500">Te enviaremos un correo electrónico para que puedas crear una nueva contraseña de forma segura.</p>
+            </div>
+            <button
+              onClick={handlePasswordReset}
+              className="whitespace-nowrap px-6 py-3 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-colors shadow-lg"
+            >
+              📧 Enviar Correo
+            </button>
+          </div>
         </div>
 
 
