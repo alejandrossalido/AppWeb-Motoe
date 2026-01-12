@@ -61,9 +61,9 @@ const TasksPage: React.FC = () => {
         <div className="flex items-center justify-between px-2 bg-white/[0.02] p-3 rounded-xl lg:bg-transparent">
           <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${status === 'proposed' ? 'bg-orange-500' :
-                status === 'available' ? 'bg-blue-500' :
-                  status === 'in_progress' ? 'bg-primary shadow-[0_0_8px_rgba(0,204,136,0.5)]' :
-                    'bg-gray-600'
+              status === 'available' ? 'bg-blue-500' :
+                status === 'in_progress' ? 'bg-primary shadow-[0_0_8px_rgba(0,204,136,0.5)]' :
+                  'bg-gray-600'
               }`}></span>
             {title}
           </h3>
@@ -122,7 +122,7 @@ const TasksPage: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <Header title="Tablero Kanban" subtitle="Gestión ágil de tareas" />
+      <Header title="Tablero de Tareas" subtitle="Gestión ágil de tareas" />
 
       <div className="p-4 lg:p-6 flex flex-col lg:flex-row lg:items-center justify-between border-b border-white/5 bg-background-dark gap-4">
         <div className="flex overflow-x-auto gap-2 no-scrollbar pb-2 lg:pb-0">
@@ -150,9 +150,9 @@ const TasksPage: React.FC = () => {
               <textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-5 text-sm focus:border-primary outline-none resize-none" placeholder="Descripción técnica..." />
               <div className="grid grid-cols-2 gap-4">
                 <select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })} className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none">
-                  <option value="Baja">Prioridad Baja</option>
-                  <option value="Media">Media</option>
-                  <option value="Alta">Alta</option>
+                  <option value="Baja" className="bg-[#1a1a1a] text-white">Prioridad Baja</option>
+                  <option value="Media" className="bg-[#1a1a1a] text-white">Prioridad Media</option>
+                  <option value="Alta" className="bg-[#1a1a1a] text-white">Prioridad Alta</option>
                 </select>
                 <input type="number" value={newTask.credits} onChange={e => setNewTask({ ...newTask, credits: parseInt(e.target.value) })} className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none" placeholder="Créditos" />
               </div>

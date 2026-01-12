@@ -27,16 +27,51 @@ const SettingsPage: React.FC = () => {
 
   const handleAvatarClick = () => fileInputRef.current?.click();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && currentUser) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setCurrentUser({ ...currentUser, avatar: base64 });
-        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, avatar: base64 } : u));
-      };
-      reader.readAsDataURL(file);
+      try {
+        // 1. Upload to Supabase Storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}-${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        // Optimistic UI Update using Base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          setCurrentUser({ ...currentUser, avatar: base64 });
+        };
+        reader.readAsDataURL(file);
+
+        // Actual Upload
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get Public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        // 2. Persist to Profiles Table
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', currentUser.id);
+
+        if (updateError) throw updateError;
+
+        // Final State Sync
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, avatar: publicUrl } : u));
+        addNotification(currentUser.id, "Perfil Actualizado", "Tu nueva foto de perfil se ha guardado correctamente.");
+
+      } catch (error: any) {
+        console.error("Error uploading avatar:", error);
+        alert("Error al guardar la foto de perfil: " + error.message);
+      }
     }
   };
 

@@ -23,7 +23,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <Header title="Panel Operativo" subtitle="Gestión de equipo Formula Student" />
+      <Header title="Panel Operativo" subtitle="Gestión de equipo UPV Motoe" />
 
       <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8 custom-scroll">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
