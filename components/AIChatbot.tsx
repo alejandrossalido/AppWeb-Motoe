@@ -27,21 +27,28 @@ const AIChatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // 1. Fetch Basic Specs Context
+      // 1. RAG Lite: Extract keywords > 3 chars
+      const keywords = userMsg.toLowerCase().split(' ').filter(w => w.length > 3);
       let systemContext = "";
-      const { data: specs } = await supabase.from('moto_specs').select('*');
 
-      if (specs && specs.length > 0) {
-        // Simple search: check if any word from user input (longer than 3 chars) is in category or component_name
-        const keywords = userMsg.toLowerCase().split(' ').filter(w => w.length > 3);
-        const relevantSpecs = specs.filter(s => {
-          const content = `${s.category} ${s.component_name} ${s.notes}`.toLowerCase();
-          return keywords.some(k => content.includes(k));
-        });
+      if (keywords.length > 0) {
+        // Build search query: (cat ilike k1 OR comp ilike k1) OR (cat ilike k2...)
+        // Simplified: just match ANY keyword in component_name OR category OR notes
+        const orConditions = keywords.map(k => `component_name.ilike.%${k}%,category.ilike.%${k}%,notes.ilike.%${k}%`).join(',');
 
-        if (relevantSpecs.length > 0) {
-          const dataStr = relevantSpecs.map(s => `- ${s.category}: ${s.component_name} = ${s.spec_value} (${s.notes || ''})`).join('\n');
-          systemContext = `INFORMACIÓN DE BASE DE DATOS TÉCNICA:\n${dataStr}\n\nINSTRUCCIÓN: Si la información anterior es útil para la pregunta "${userMsg}", úsala y empieza tu respuesta con EXACTAMENTE la frase: "Según la base de datos técnica...". Si no es relevante, ignórala.\n\n`;
+        const { data: specs } = await supabase
+          .from('moto_specs')
+          .select('*')
+          .or(orConditions)
+          .limit(5);
+
+        if (specs && specs.length > 0) {
+          const dataStr = specs.map(s => {
+            const fileInfo = s.file_url ? "[TIENE ARCHIVO ADJUNTO]" : "[Sin archivo]";
+            return `- ${s.category}: ${s.component_name} (Valor: ${s.spec_value}). Notas: ${s.notes || 'N/A'}. ${fileInfo}`;
+          }).join('\n');
+
+          systemContext = `INFORMACIÓN TÉCNICA ENCONTRADA (ÚSALA):\n${dataStr}\n\nINSTRUCCIÓN: Si la información anterior es útil, úsala. Si un item tiene [TIENE ARCHIVO ADJUNTO], menciónalo explícitamente como "Tiene un archivo adjunto disponible para descarga". Empieza diciendo "Según la base de datos técnica..." si usas estos datos.\n\n`;
         }
       }
 
@@ -49,6 +56,7 @@ const AIChatbot: React.FC = () => {
       const response = await geminiChat(finalPrompt);
       setMessages(prev => [...prev, { role: 'bot', text: response || "Lo siento, no pude procesar eso." }]);
     } catch (error) {
+      console.error(error);
       setMessages(prev => [...prev, { role: 'bot', text: "Error de conexión con IA." }]);
     } finally {
       setIsLoading(false);

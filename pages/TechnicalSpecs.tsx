@@ -1,14 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import { supabase } from '../services/supabase';
 import { MotoSpec } from '../types';
 import { useApp } from '../App';
+import { useLocation } from 'react-router-dom';
 
 const TechnicalSpecs: React.FC = () => {
     const { currentUser } = useApp();
+    const location = useLocation();
     const [specs, setSpecs] = useState<MotoSpec[]>([]);
     const [loading, setLoading] = useState(true);
+    const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
     // File Upload State
     const [file, setFile] = useState<File | null>(null);
@@ -45,6 +48,22 @@ const TechnicalSpecs: React.FC = () => {
     useEffect(() => {
         fetchSpecs();
     }, []);
+
+    // Deep Linking Scroll Effect
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const targetId = params.get('id');
+
+        if (targetId && !loading && specs.length > 0) {
+            setHighlightedId(targetId);
+            const element = document.getElementById(`spec-${targetId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Remove highlight after 3 seconds
+                setTimeout(() => setHighlightedId(null), 3000);
+            }
+        }
+    }, [location.search, loading, specs]);
 
     const fetchSpecs = async () => {
         setLoading(true);
@@ -303,7 +322,11 @@ const TechnicalSpecs: React.FC = () => {
                                     </tr>
                                 ) : (
                                     specs.map((spec) => (
-                                        <tr key={spec.id} className="hover:bg-white/[0.02] transition-colors group">
+                                        <tr
+                                            key={spec.id}
+                                            id={`spec-${spec.id}`}
+                                            className={`hover:bg-white/[0.02] transition-colors group ${highlightedId === spec.id ? 'bg-primary/10 border-l-4 border-primary' : ''}`}
+                                        >
                                             <td className="p-4 pl-6 font-bold text-brand-elec">{spec.category}</td>
                                             <td className="p-4 font-bold text-white">
                                                 {spec.component_name}
