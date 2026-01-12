@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { useApp } from '../App';
-// import UpdatePassword from './UpdatePassword'; // Removed
 import { supabase } from '../services/supabase';
 import { ORGANIGRAMA } from '../constants';
 import { Branch } from '../types';
@@ -20,7 +19,7 @@ const SettingsPage: React.FC = () => {
   const [targetScope, setTargetScope] = useState<'global' | 'branch' | 'subteam'>('branch');
   const [targetValue, setTargetValue] = useState<string>('Eléctrica');
   const [sending, setSending] = useState(false);
-  const [isNotifOpen, setIsNotifOpen] = useState(false); // New state for accordion
+  const [isNotifOpen, setIsNotifOpen] = useState(false); // Accordion state
 
   // FCM Token Logic
   useEffect(() => {
@@ -148,23 +147,24 @@ const SettingsPage: React.FC = () => {
       alert('Notificación enviada con éxito.');
       setNotifTitle('');
       setNotifBody('');
-      setIsNotifOpen(false); // Auto close
+      setIsNotifOpen(false); // Close after sending
     }
     setSending(false);
   };
 
-  // Restored Password Reset Logic
+  // Password Reset Logic (Email)
   const handlePasswordReset = async () => {
     if (!currentUser?.email) return;
 
+    // Using Supabase standard reset flow
     const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email, {
-      redirectTo: `${window.location.origin}/update-password`,
+      redirectTo: `${window.location.origin}/update-password`, // Ensure this route exists if you want a custom flow, or let Supabase handle the link
     });
 
     if (error) {
       alert(`Error: ${error.message}`);
     } else {
-      alert(`Se ha enviado un enlace de recuperación a ${currentUser.email}. Revisa tu bandeja de entrada (y spam).`);
+      alert(`Se ha enviado un correo de recuperación a ${currentUser.email}.`);
     }
   };
 
@@ -205,13 +205,13 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Notificaciones - Solo Roles Autorizados */}
+        {/* Notificaciones - Accordion */}
         {['owner', 'coordinator', 'team_lead'].includes(currentUser?.role || '') && (
           <div className="bg-card-dark border border-primary/20 rounded-[32px] shadow-glow overflow-hidden transition-all duration-300">
-            {/* Header / Accordion Trigger */}
+            {/* Cabecera Clicable */}
             <button
               onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className="w-full flex items-center justify-between p-8 bg-black/20 hover:bg-white/5 transition-colors text-left"
+              className="w-full flex items-center justify-between p-8 bg-black/20 hover:bg-white/5 transition-colors text-left outline-none"
             >
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-primary text-2xl">campaign</span>
@@ -222,7 +222,7 @@ const SettingsPage: React.FC = () => {
               </span>
             </button>
 
-            {/* Collapsible Content */}
+            {/* Contenido Plegable */}
             <div className={`transition-all duration-300 ease-in-out ${isNotifOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
               <div className="p-8 pt-0 space-y-4 relative z-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -289,7 +289,7 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Security Section (Restored) */}
+        {/* Seguridad - Restaurado */}
         <div className="bg-card-dark border border-white/5 rounded-[32px] p-8 shadow-2xl">
           <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">lock_reset</span>
@@ -299,17 +299,16 @@ const SettingsPage: React.FC = () => {
           <div className="bg-white/5 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
               <p className="text-sm font-bold text-white mb-1">Restablecer Contraseña</p>
-              <p className="text-xs text-gray-500">Te enviaremos un correo electrónico para que puedas crear una nueva contraseña de forma segura.</p>
+              <p className="text-xs text-gray-500">Te enviaremos un enlace a tu correo para cambiar la clave de forma segura.</p>
             </div>
             <button
               onClick={handlePasswordReset}
-              className="whitespace-nowrap px-6 py-3 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-colors shadow-lg"
+              className="whitespace-nowrap px-6 py-3 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-colors shadow-lg flex items-center gap-2"
             >
-              📧 Enviar Correo
+              📧 Enviar Correo de Restablecimiento
             </button>
           </div>
         </div>
-
 
         <button onClick={signOut} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 font-black rounded-2xl hover:bg-red-500 hover:text-white transition-all text-xs uppercase tracking-widest">
           Cerrar Sesión
