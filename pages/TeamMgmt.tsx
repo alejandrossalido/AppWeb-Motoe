@@ -90,7 +90,17 @@ const TeamMgmt: React.FC = () => {
     }
   };
 
-  const filteredTeam = users.filter(m => m.status === 'active' && (filter === 'Todos' || m.branch === filter));
+  const filteredTeam = users.filter(m => {
+    // Regla de Seguridad: Team Leads solo ven su rama
+    if (currentUser?.role === 'team_lead') {
+      return m.status === 'active' && m.branch === currentUser.branch;
+    }
+    // Owner/Coordinator ven todo según filtro UI
+    return m.status === 'active' && (filter === 'Todos' || m.branch === filter);
+  });
+
+  // Determinar si mostrar controles de filtro
+  const canFilter = currentUser?.role === 'owner' || currentUser?.role === 'coordinator';
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-background-dark">
@@ -134,21 +144,25 @@ const TeamMgmt: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-lg font-black tracking-tight">Miembros Activos</h3>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{filteredTeam.length} usuarios en {filter}</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                  {filteredTeam.length} usuarios {canFilter ? `en ${filter}` : `en ${currentUser?.branch}`}
+                </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-1.5 bg-black/20 p-1 rounded-xl w-full lg:w-fit">
-              {['Todos', 'Eléctrica', 'Mecánica', 'Administración', 'General'].map(b => (
-                <button
-                  key={b}
-                  onClick={() => setFilter(b as any)}
-                  className={`flex-1 lg:flex-none px-3 py-2 rounded-lg text-[9px] font-black uppercase transition-all whitespace-nowrap ${filter === b ? 'bg-primary text-black shadow-glow' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
-                >
-                  {b}
-                </button>
-              ))}
-            </div>
+            {canFilter && (
+              <div className="flex flex-wrap gap-1.5 bg-black/20 p-1 rounded-xl w-full lg:w-fit">
+                {['Todos', 'Eléctrica', 'Mecánica', 'Administración', 'General'].map(b => (
+                  <button
+                    key={b}
+                    onClick={() => setFilter(b as any)}
+                    className={`flex-1 lg:flex-none px-3 py-2 rounded-lg text-[9px] font-black uppercase transition-all whitespace-nowrap ${filter === b ? 'bg-primary text-black shadow-glow' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {b}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="block lg:hidden p-4 space-y-3">
