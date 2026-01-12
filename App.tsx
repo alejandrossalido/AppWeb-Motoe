@@ -12,6 +12,7 @@ import Auth from './pages/Auth';
 import TechnicalSpecs from './pages/TechnicalSpecs';
 import UpdatePassword from './pages/UpdatePassword';
 import AIChatbot from './components/AIChatbot';
+import UserProfile from './pages/UserProfile';
 import { supabase } from './services/supabase';
 import logo from './assets/logo.png';
 import { User, Task, Request, TimeEntry, CalendarEvent, UserStatus, Role, Branch, MotoSpec } from './types';
