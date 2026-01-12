@@ -60,7 +60,15 @@ const TechnicalSpecs: React.FC = () => {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setFile(e.target.files[0]);
+            const selectedFile = e.target.files[0];
+            // Validación 5MB
+            if (selectedFile.size > 5 * 1024 * 1024) {
+                alert("El archivo es demasiado grande (Máx 5MB)");
+                e.target.value = "";
+                setFile(null);
+                return;
+            }
+            setFile(selectedFile);
         }
     };
 
@@ -76,7 +84,8 @@ const TechnicalSpecs: React.FC = () => {
                 .upload(filePath, fileToUpload);
 
             if (uploadError) {
-                console.error('Error uploading file:', uploadError);
+                console.error('Error detallado subiendo archivo:', uploadError);
+                alert(`Error subiendo archivo: ${uploadError.message}`);
                 throw uploadError;
             }
 
@@ -185,13 +194,21 @@ const TechnicalSpecs: React.FC = () => {
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Categoría</label>
-                                <input
-                                    required
-                                    value={formData.category}
-                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                    placeholder="Ej: Batería"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
-                                />
+                                <div className="relative">
+                                    <select
+                                        required
+                                        value={formData.category}
+                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                        className="w-full bg-background-dark border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none appearance-none cursor-pointer"
+                                    >
+                                        <option value="" disabled className="text-gray-500">Seleccionar...</option>
+                                        <option value="General">General</option>
+                                        <option value="Mecánica">Mecánica</option>
+                                        <option value="Eléctrica">Eléctrica</option>
+                                        <option value="Administración">Administración</option>
+                                    </select>
+                                    <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
+                                </div>
                             </div>
 
                             <div className="space-y-1">
@@ -206,9 +223,8 @@ const TechnicalSpecs: React.FC = () => {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Valor/Medida</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Valor/Medida (Opcional)</label>
                                 <input
-                                    required
                                     value={formData.spec_value}
                                     onChange={e => setFormData({ ...formData, spec_value: e.target.value })}
                                     placeholder="Ej: 3.8V"
