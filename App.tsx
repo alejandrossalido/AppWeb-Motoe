@@ -247,6 +247,7 @@ const App: React.FC = () => {
                   <Route path="/tareas" element={<TasksPage />} />
                   <Route path="/lab" element={<OpsLab />} />
                   <Route path="/datos-tecnicos" element={<TechnicalSpecs />} />
+                  <Route path="/perfil/:userId" element={<UserProfile />} />
                   <Route path="/historial" element={<HistoryPage />} />
                   <Route path="/calendario" element={<CalendarPage />} />
                   <Route path="/configuracion" element={<SettingsPage />} />
