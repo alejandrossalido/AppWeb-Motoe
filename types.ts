@@ -77,3 +77,18 @@ export interface MotoSpec {
   created_at: string;
 }
 
+export interface WorkSession {
+  id: string;
+  user_id: string;
+  branch: string;
+  subteam: string;
+  description: string;
+  duration_minutes: number;
+  created_at: string;
+  profiles?: { // Joined data
+    full_name: string;
+    avatar_url: string;
+    role: Role;
+  };
+}
+

@@ -28,22 +28,41 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
-  // Debounced Search
+  // Debounced Search (Unified)
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchTerm.length > 2) {
         setIsSearching(true);
-        const { data, error } = await supabase
-          .from('moto_specs')
-          .select('*')
-          .or(`component_name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
-          .limit(5);
 
-        if (!error && data) {
-          setSearchResults(data as MotoSpec[]);
+        try {
+          const [specsRes, logsRes, profilesRes] = await Promise.all([
+            // 1. Technical Specs
+            supabase.from('moto_specs').select('*')
+              .or(`component_name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
+              .limit(3),
+            // 2. Work Logs
+            supabase.from('work_sessions').select('id, description, profiles:user_id(full_name)')
+              .ilike('description', `%${searchTerm}%`)
+              .limit(3),
+            // 3. Profiles
+            supabase.from('profiles').select('id, full_name, role')
+              .ilike('full_name', `%${searchTerm}%`)
+              .limit(3)
+          ]);
+
+          const results: any[] = [];
+
+          if (specsRes.data) specsRes.data.forEach((s: any) => results.push({ ...s, type: 'spec' }));
+          if (logsRes.data) logsRes.data.forEach((l: any) => results.push({ ...l, type: 'log' }));
+          if (profilesRes.data) profilesRes.data.forEach((p: any) => results.push({ ...p, type: 'profile' }));
+
+          setSearchResults(results as any);
           setShowResults(true);
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsSearching(false);
         }
-        setIsSearching(false);
       } else {
         setSearchResults([]);
         setShowResults(false);
@@ -64,10 +83,27 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleResultClick = (id: string) => {
+  const handleResultClick = (item: any) => {
     setShowResults(false);
     setSearchTerm('');
-    navigate(`/datos-tecnicos?id=${id}`);
+    if (item.type === 'spec') navigate(`/datos-tecnicos?id=${item.id}`);
+    if (item.type === 'log') navigate(`/lab?id=${item.id}`);
+    if (item.type === 'profile') navigate(`/perfil/${item.id}`);
+  };
+
+  // RENDER DROPDOWN CONTENT
+  // Helper to render sections
+  const renderSection = (title: string, items: any[], icon: string, renderItem: (i: any) => React.ReactNode) => {
+    if (!items || items.length === 0) return null;
+    return (
+      <div className="mb-2">
+        <div className="p-2 bg-[#1a1a1a] border-y border-white/5 flex items-center gap-2">
+          <span className="material-symbols-outlined text-[12px] text-gray-500">{icon}</span>
+          <p className="text-[9px] font-black uppercase text-gray-500 tracking-widest">{title}</p>
+        </div>
+        {items.map(renderItem)}
+      </div>
+    );
   };
 
   return (
@@ -94,27 +130,33 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
           </div>
 
           {/* Search Dropdown */}
-          {showResults && searchResults.length > 0 && (
+          {showResults && (
             <div className="absolute top-12 left-0 w-80 bg-card-dark border border-white/10 rounded-2xl shadow-2xl z-[70] overflow-hidden animate-in slide-in-from-top-2">
-              <div className="p-3 bg-[#1a1a1a] border-b border-white/5">
-                <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Resultados</p>
-              </div>
-              <div className="max-h-[300px] overflow-y-auto">
-                {searchResults.map(result => (
-                  <div
-                    key={result.id}
-                    onClick={() => handleResultClick(result.id)}
-                    className="p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 transition-colors group"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm font-bold text-white group-hover:text-primary transition-colors">{result.component_name}</p>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">{result.category}</p>
+              <div className="max-h-[400px] overflow-y-auto">
+                {searchResults.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 text-xs font-bold uppercase">No se encontraron resultados</div>
+                ) : (
+                  <>
+                    {renderSection("Datos Técnicos", searchResults.filter(r => r.type === 'spec'), "settings", (r) => (
+                      <div key={r.id} onClick={() => handleResultClick(r)} className="p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 transition-colors">
+                        <p className="text-sm font-bold text-white">{r.component_name}</p>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-widest">{r.category}</p>
                       </div>
-                      {result.file_url && <span className="material-symbols-outlined text-[16px] text-emerald-500" title="Archivo adjunto">attach_file</span>}
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                    {renderSection("Bitácora", searchResults.filter(r => r.type === 'log'), "history_edu", (r) => (
+                      <div key={r.id} onClick={() => handleResultClick(r)} className="p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 transition-colors">
+                        <p className="text-xs text-white line-clamp-2 italic">"{r.description}"</p>
+                        <p className="text-[9px] text-gray-500 font-bold uppercase mt-1 text-right">{r.profiles?.full_name}</p>
+                      </div>
+                    ))}
+                    {renderSection("Miembros", searchResults.filter(r => r.type === 'profile'), "person", (r) => (
+                      <div key={r.id} onClick={() => handleResultClick(r)} className="p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 transition-colors flex justify-between items-center">
+                        <span className="text-sm font-bold text-white">{r.full_name}</span>
+                        <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 uppercase">{r.role}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           )}
