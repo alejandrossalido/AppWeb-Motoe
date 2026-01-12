@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { BFcm, getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBgmZFlq7If9BQmQBB-IjfIQco3jbau0TA",
