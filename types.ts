@@ -72,6 +72,8 @@ export interface MotoSpec {
   component_name: string;
   spec_value: string;
   notes?: string;
+  file_url?: string;
+  branch?: string;
   created_at: string;
 }
 
