@@ -6,7 +6,8 @@ import { Branch, Role, UserStatus, User } from '../types';
 const ORGANIGRAMA: Record<Branch, string[]> = {
   'Eléctrica': ['Powertrain', 'Diseño', 'Telemetría'],
   'Mecánica': ['Dinámica', 'Parte Ciclo', 'Chasis', 'Anclajes', 'Carenado'],
-  'Administración': ['MS1', 'Logística', 'RR.EE', 'G.E', 'Media']
+  'Administración': ['MS1', 'Logística', 'RR.EE', 'G.E', 'Media'],
+  'General': ['Coordinación']
 };
 
 import logo from '../assets/logo.png';
@@ -78,9 +79,7 @@ const Auth: React.FC = () => {
     } else {
       const validAdminEmails = ['alejandrosalidojimenez@gmail.com', 'alejandrosalidoijmenez@gmail.com'];
       const isSpecAdmin = validAdminEmails.includes(formData.email.toLowerCase());
-      const isAutoName = formData.name.toLowerCase().includes('hugo') || formData.name.toLowerCase().includes('admin');
-
-      const shouldAutoApprove = isSpecAdmin || isAutoName;
+      const shouldAutoApprove = isSpecAdmin;
 
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
