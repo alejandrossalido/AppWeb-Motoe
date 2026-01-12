@@ -3,12 +3,7 @@ import { supabase } from '../services/supabase';
 import { useApp } from '../App';
 import { Branch, Role, UserStatus, User } from '../types';
 
-const ORGANIGRAMA: Record<Branch, string[]> = {
-  'Eléctrica': ['Powertrain', 'Diseño', 'Telemetría'],
-  'Mecánica': ['Dinámica', 'Parte Ciclo', 'Chasis', 'Anclajes', 'Carenado'],
-  'Administración': ['MS1', 'Logística', 'RR.EE', 'G.E', 'Media'],
-  'General': ['Coordinación']
-};
+import { ORGANIGRAMA } from '../constants';
 
 import logo from '../assets/logo.png';
 
