@@ -21,32 +21,72 @@ const SettingsPage: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false); // Accordion state
 
-  // FCM Token Logic
+  // Manual Notification Toggle State
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [isLoadingNotifs, setIsLoadingNotifs] = useState(false);
+
+  // Check initial state
   useEffect(() => {
-    const registerToken = async () => {
+    const checkNotificationStatus = async () => {
+      if (!currentUser) return;
+
+      const { data } = await supabase
+        .from('user_fcm_tokens')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .single();
+
+      if (data) {
+        setNotificationsEnabled(true);
+      } else {
+        setNotificationsEnabled(false);
+      }
+    };
+
+    checkNotificationStatus();
+  }, [currentUser]);
+
+  const handleToggleNotifications = async () => {
+    setIsLoadingNotifs(true);
+
+    if (!notificationsEnabled) {
+      // Turn ON
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
           const token = await getToken(messaging, { vapidKey: VAPID_KEY });
           if (token && currentUser) {
-            // Upsert token to Supabase
             await supabase.from('user_fcm_tokens').upsert({
               user_id: currentUser.id,
               token: token,
               platform: 'web'
             });
-            console.log('FCM Token registered:', token);
+            setNotificationsEnabled(true);
+            console.log('FCM Token registered manually:', token);
           }
+        } else {
+          alert("Las notificaciones están bloqueadas en tu navegador. Por favor, habilítalas en la configuración del sitio (candado url).");
+          setNotificationsEnabled(false);
         }
       } catch (err) {
-        console.error('Error registering FCM token:', err);
+        console.error('Error enabling notifications:', err);
+        alert('Error al activar notificaciones.');
       }
-    };
-
-    if (currentUser) {
-      registerToken();
+    } else {
+      // Turn OFF
+      try {
+        if (currentUser) {
+          // Remove from DB (Primary action)
+          await supabase.from('user_fcm_tokens').delete().eq('user_id', currentUser.id);
+          setNotificationsEnabled(false);
+        }
+      } catch (err) {
+        console.error('Error disabling notifications:', err);
+      }
     }
-  }, [currentUser]);
+
+    setIsLoadingNotifs(false);
+  };
 
   // Profile Image Logic
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,6 +328,33 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Preferencias de Notificación */}
+        <div className="bg-card-dark border border-white/5 rounded-[32px] p-8 shadow-2xl">
+          <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">notifications_active</span>
+            Preferencias
+          </h3>
+
+          <div className="bg-white/5 rounded-2xl p-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-white mb-1">Notificaciones Push</p>
+              <p className="text-xs text-gray-500">Recibe avisos sobre nuevas tareas y mensajes urgentes.</p>
+            </div>
+
+            <button
+              onClick={handleToggleNotifications}
+              disabled={isLoadingNotifs}
+              className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 ease-in-out ${notificationsEnabled ? 'bg-primary' : 'bg-gray-700'}`}
+            >
+              <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out flex items-center justify-center ${notificationsEnabled ? 'translate-x-6' : 'translate-x-0'}`}>
+                {isLoadingNotifs ? (
+                  <div className="w-3 h-3 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+                ) : null}
+              </div>
+            </button>
+          </div>
+        </div>
 
         {/* Seguridad - Restaurado */}
         <div className="bg-card-dark border border-white/5 rounded-[32px] p-8 shadow-2xl">
