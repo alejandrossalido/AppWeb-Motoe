@@ -195,7 +195,7 @@ const SettingsPage: React.FC = () => {
       <Header title="Configuración" />
 
       {/* Main Content Area - Mobile First Centered Layout */}
-      <div className="flex-1 overflow-y-auto custom-scroll p-4 pb-24"> // Added pb-24 for mobile bottom nav clearance
+      <div className="flex-1 overflow-y-auto custom-scroll p-4 pb-32">
         <div className="max-w-md mx-auto space-y-6">
 
           {/* 1. Profile Card */}

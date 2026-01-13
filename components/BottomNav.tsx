@@ -21,6 +21,27 @@ const BottomNav: React.FC = () => {
             <div className="flex justify-around items-center h-16 px-2">
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.path;
+
+                    // Special case for Settings/Profile: Show Avatar
+                    if (item.id === 'settings') {
+                        return (
+                            <Link
+                                key={item.id}
+                                to={item.path}
+                                className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all ${isActive ? 'scale-110' : 'opacity-70'}`}
+                            >
+                                <img
+                                    src={currentUser.avatar}
+                                    alt="Profile"
+                                    className={`w-7 h-7 rounded-full object-cover border-2 ${isActive ? 'border-primary' : 'border-gray-500'}`}
+                                />
+                                {isActive && (
+                                    <span className="w-1 h-1 bg-primary rounded-full absolute bottom-2"></span>
+                                )}
+                            </Link>
+                        );
+                    }
+
                     return (
                         <Link
                             key={item.id}

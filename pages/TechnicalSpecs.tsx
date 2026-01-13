@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import { supabase } from '../services/supabase';
@@ -17,9 +16,10 @@ const TechnicalSpecs: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
 
-    // Delete Modal State
+    // UI States
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+    const [isFormOpen, setIsFormOpen] = useState(false); // Mobile accordion for form
 
     const [formData, setFormData] = useState({
         category: '',
@@ -29,12 +29,9 @@ const TechnicalSpecs: React.FC = () => {
     });
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // Permisos: Solo owner, coordinator y team_lead pueden editar.
+    // Permisos
     const canEdit = currentUser && ['owner', 'coordinator', 'team_lead'].includes(currentUser.role);
 
-    // Filtro de Seguridad para Borrar:
-    // Owner/Coord pueden borrar todo. Team Lead solo de su rama (pero aquí asumimos que moto_spec.branch existe).
-    // Si moto_spec no tiene rama guardada (legacy), asumimos 'General' o que cualquiera con permiso global puede borrar.
     const canDelete = (item: MotoSpec) => {
         if (!currentUser) return false;
         if (['owner', 'coordinator'].includes(currentUser.role)) return true;
@@ -59,7 +56,6 @@ const TechnicalSpecs: React.FC = () => {
             const element = document.getElementById(`spec-${targetId}`);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Remove highlight after 3 seconds
                 setTimeout(() => setHighlightedId(null), 3000);
             }
         }
@@ -80,7 +76,6 @@ const TechnicalSpecs: React.FC = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const selectedFile = e.target.files[0];
-            // Validación 5MB
             if (selectedFile.size > 5 * 1024 * 1024) {
                 alert("El archivo es demasiado grande (Máx 5MB)");
                 e.target.value = "";
@@ -102,16 +97,13 @@ const TechnicalSpecs: React.FC = () => {
                 .from('technical-files')
                 .upload(filePath, fileToUpload);
 
-            if (uploadError) {
-                console.error('Error detallado subiendo archivo:', uploadError);
-                alert(`Error subiendo archivo: ${uploadError.message}`);
-                throw uploadError;
-            }
+            if (uploadError) throw uploadError;
 
             const { data } = supabase.storage.from('technical-files').getPublicUrl(filePath);
             return data.publicUrl;
         } catch (error) {
-            alert('Error subiendo archivo. Inténtalo de nuevo.');
+            console.error(error);
+            alert('Error subiendo archivo.');
             return null;
         } finally {
             setUploading(false);
@@ -125,14 +117,14 @@ const TechnicalSpecs: React.FC = () => {
         let fileUrl = undefined;
         if (file) {
             const uploadedUrl = await uploadFile(file);
-            if (!uploadedUrl) return; // Stop if upload failed
+            if (!uploadedUrl) return;
             fileUrl = uploadedUrl;
         }
 
         const payload = {
             ...formData,
             ...(fileUrl && { file_url: fileUrl }),
-            branch: currentUser?.branch || 'General' // Asignar rama del creador o General
+            branch: currentUser?.branch || 'General'
         };
 
         if (editingId) {
@@ -146,6 +138,7 @@ const TechnicalSpecs: React.FC = () => {
                 setEditingId(null);
                 setFormData({ category: '', component_name: '', spec_value: '', notes: '' });
                 setFile(null);
+                setIsFormOpen(false);
             }
         } else {
             const { data, error } = await supabase
@@ -158,6 +151,7 @@ const TechnicalSpecs: React.FC = () => {
                 setSpecs([...specs, data as MotoSpec]);
                 setFormData({ category: '', component_name: '', spec_value: '', notes: '' });
                 setFile(null);
+                setIsFormOpen(false);
             }
         }
     };
@@ -171,7 +165,10 @@ const TechnicalSpecs: React.FC = () => {
             spec_value: item.spec_value,
             notes: item.notes || ''
         });
-        setFile(null); // Reset file input for editing (adding new file replaces old)
+        setFile(null);
+        setIsFormOpen(true); // Open form to edit
+        // Scroll to form?
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const confirmDelete = (id: string) => {
@@ -194,21 +191,84 @@ const TechnicalSpecs: React.FC = () => {
         setEditingId(null);
         setFormData({ category: '', component_name: '', spec_value: '', notes: '' });
         setFile(null);
+        setIsFormOpen(false);
     };
+
+    // Mobile Card Logic
+    const SpecCard = ({ spec }: { spec: MotoSpec }) => (
+        <div
+            id={`spec-${spec.id}`}
+            className={`bg-[#141414] border border-white/5 rounded-2xl p-4 shadow-lg mb-4 ${highlightedId === spec.id ? 'ring-2 ring-primary ring-opacity-50' : ''}`}
+        >
+            <div className="flex justify-between items-start mb-2">
+                <div>
+                    <span className="text-[10px] uppercase font-black tracking-widest text-brand-elec">{spec.category}</span>
+                    <h3 className="text-lg font-bold text-white mt-1">{spec.component_name}</h3>
+                </div>
+                {spec.file_url && (
+                    <a href={spec.file_url} target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center bg-white/5 rounded-full text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors">
+                        <span className="material-symbols-outlined text-sm">download</span>
+                    </a>
+                )}
+            </div>
+
+            <div className="space-y-2 mt-3">
+                <div className="flex items-center justify-between p-2 bg-white/[0.02] rounded-lg">
+                    <span className="text-xs text-gray-500 font-bold uppercase">Valor</span>
+                    <span className="text-sm text-primary font-mono">{spec.spec_value || '-'}</span>
+                </div>
+                {spec.notes && (
+                    <div className="p-2">
+                        <p className="text-xs text-gray-400 italic line-clamp-3">{spec.notes}</p>
+                    </div>
+                )}
+            </div>
+
+            {canEdit && (
+                <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-white/5">
+                    <button onClick={() => handleEdit(spec)} className="text-gray-400 hover:text-white flex items-center gap-1 text-xs font-bold uppercase">
+                        <span className="material-symbols-outlined text-sm">edit</span> Editar
+                    </button>
+                    {canDelete(spec) && (
+                        <button onClick={() => confirmDelete(spec.id)} className="text-red-500/70 hover:text-red-500 flex items-center gap-1 text-xs font-bold uppercase">
+                            <span className="material-symbols-outlined text-sm">delete</span> Borrar
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
+    );
 
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-background-dark relative">
-            <Header title="Datos Técnicos" subtitle="Base de conocimiento del prototipo" />
+            <Header title="Datos Técnicos" subtitle="Base de Conocimiento" />
 
-            <div className={`flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-8 ${deleteModalOpen ? 'blur-sm' : ''}`}>
+            <div className={`flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-6 lg:space-y-8 pb-32 ${deleteModalOpen ? 'blur-sm' : ''}`}>
 
-                {/* Formulario */}
-                {canEdit && (
-                    <div className="bg-card-dark border border-white/5 rounded-[32px] p-6 lg:p-8 shadow-xl">
-                        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-primary">add_circle</span>
-                            {editingId ? 'Editar Dato Técnico' : 'Añadir Nuevo Dato'}
-                        </h3>
+                {/* Mobile Add Button Trigger (Accordion) */}
+                {canEdit && !isFormOpen && (
+                    <button
+                        onClick={() => setIsFormOpen(true)}
+                        className="w-full py-4 bg-[#1a1a1a] border border-white/10 border-dashed rounded-2xl flex items-center justify-center gap-2 text-gray-400 hover:bg-white/5 hover:text-white transition-all md:hidden mb-4"
+                    >
+                        <span className="material-symbols-outlined">add_circle</span>
+                        <span className="text-xs font-bold uppercase tracking-widest">Añadir Nuevo Dato</span>
+                    </button>
+                )}
+
+                {/* Formulario (Responsive) */}
+                {canEdit && (isFormOpen || window.innerWidth >= 768) && (
+                    <div className={`bg-card-dark border border-white/5 rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 shadow-xl ${isFormOpen ? 'animate-in slide-in-from-top-4' : 'hidden md:block'}`}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">add_circle</span>
+                                {editingId ? 'Editar Dato' : 'Nuevo Dato'}
+                            </h3>
+                            {/* Mobile Close Button */}
+                            <button onClick={() => setIsFormOpen(false)} className="md:hidden text-gray-500 hover:text-white">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
 
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="space-y-1">
@@ -231,32 +291,32 @@ const TechnicalSpecs: React.FC = () => {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Nombre Componente</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Componente</label>
                                 <input
                                     required
                                     value={formData.component_name}
                                     onChange={e => setFormData({ ...formData, component_name: e.target.value })}
-                                    placeholder="Ej: Celda Pack A"
+                                    placeholder="Ej: Batería HV"
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Valor/Medida (Opcional)</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Valor</label>
                                 <input
                                     value={formData.spec_value}
                                     onChange={e => setFormData({ ...formData, spec_value: e.target.value })}
-                                    placeholder="Ej: 3.8V"
+                                    placeholder="Ej: 400V"
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Notas (Opcional)</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Notas</label>
                                 <input
                                     value={formData.notes}
                                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                    placeholder="Detalles extra..."
+                                    placeholder="Detalles..."
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
                                 />
                             </div>
@@ -265,10 +325,9 @@ const TechnicalSpecs: React.FC = () => {
                                 <div className="flex items-center gap-3">
                                     <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${file ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50' : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'}`}>
                                         <span className="material-symbols-outlined text-[18px]">{file ? 'check_circle' : 'attach_file'}</span>
-                                        <span className="text-xs font-bold uppercase tracking-wider">{file ? 'Archivo Listo' : 'Adjuntar'}</span>
+                                        <span className="text-xs font-bold uppercase tracking-wider">{file ? 'Listo' : 'Adjuntar'}</span>
                                         <input type="file" onChange={handleFileChange} className="hidden" />
                                     </label>
-                                    {file && <span className="text-[10px] text-gray-500 truncate max-w-[150px]">{file.name}</span>}
                                 </div>
 
                                 <div className="flex gap-3">
@@ -282,7 +341,7 @@ const TechnicalSpecs: React.FC = () => {
                                         disabled={uploading}
                                         className={`px-8 py-3 bg-primary text-black rounded-xl text-xs font-black uppercase tracking-widest shadow-glow hover:scale-105 transition-transform ${uploading ? 'opacity-50 cursor-wait' : ''}`}
                                     >
-                                        {uploading ? 'Subiendo...' : (editingId ? 'Actualizar' : 'Guardar')}
+                                        {uploading ? '...' : (editingId ? 'Guardar' : 'Crear')}
                                     </button>
                                 </div>
                             </div>
@@ -290,12 +349,23 @@ const TechnicalSpecs: React.FC = () => {
                     </div>
                 )}
 
-                {/* Tabla */}
-                <div className="bg-card-dark border border-white/5 rounded-[32px] overflow-hidden shadow-xl">
+                {/* Mobile: Cards View */}
+                <div className="md:hidden space-y-4">
+                    {loading ? (
+                        <p className="text-center text-gray-500 text-xs animate-pulse">Cargando...</p>
+                    ) : specs.length === 0 ? (
+                        <p className="text-center text-gray-500 text-xs py-8">No hay datos.</p>
+                    ) : (
+                        specs.map(spec => <SpecCard key={spec.id} spec={spec} />)
+                    )}
+                </div>
+
+                {/* Desktop: Table View */}
+                <div className="hidden md:block bg-card-dark border border-white/5 rounded-[32px] overflow-hidden shadow-xl">
                     <div className="p-6 border-b border-white/5">
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary">dataset</span>
-                            Base de Datos Técnico
+                            Base de Datos
                         </h3>
                     </div>
 
@@ -312,54 +382,40 @@ const TechnicalSpecs: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={canEdit ? 6 : 5} className="p-8 text-center text-gray-500 animate-pulse text-xs font-bold uppercase tracking-widest">Cargando datos...</td>
-                                    </tr>
-                                ) : specs.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={canEdit ? 6 : 5} className="p-8 text-center text-gray-500 text-xs font-bold uppercase tracking-widest">No hay datos registrados aún.</td>
-                                    </tr>
-                                ) : (
-                                    specs.map((spec) => (
-                                        <tr
-                                            key={spec.id}
-                                            id={`spec-${spec.id}`}
-                                            className={`hover:bg-white/[0.02] transition-colors group ${highlightedId === spec.id ? 'bg-primary/10 border-l-4 border-primary' : ''}`}
-                                        >
-                                            <td className="p-4 pl-6 font-bold text-brand-elec">{spec.category}</td>
-                                            <td className="p-4 font-bold text-white">
-                                                {spec.component_name}
-                                                {spec.branch && <span className="ml-2 text-[8px] px-1.5 py-0.5 rounded border border-white/10 text-gray-500 uppercase">{spec.branch}</span>}
-                                            </td>
-                                            <td className="p-4 text-gray-300 font-mono text-sm bg-white/5 rounded-lg w-fit my-2 mx-4 inline-block">{spec.spec_value}</td>
-                                            <td className="p-4 text-gray-500 text-sm max-w-xs truncate">{spec.notes}</td>
-                                            <td className="p-4 text-center">
-                                                {spec.file_url ? (
-                                                    <a href={spec.file_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-white transition-colors inline-flex">
-                                                        <span className="material-symbols-outlined text-[18px]">download</span>
-                                                    </a>
-                                                ) : (
-                                                    <span className="text-gray-700 text-[10px] uppercase font-bold">-</span>
-                                                )}
-                                            </td>
-                                            {canEdit && (
-                                                <td className="p-4 text-right pr-6">
-                                                    <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => handleEdit(spec)} className="p-2 hover:bg-brand-elec/20 hover:text-brand-elec rounded-lg text-gray-400 transition-colors">
-                                                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                                {loading && (<tr><td colSpan={6} className="p-4 text-center text-gray-500">Cargando...</td></tr>)}
+                                {!loading && specs.map((spec) => (
+                                    <tr
+                                        key={spec.id}
+                                        id={`spec-desktop-${spec.id}`}
+                                        className={`hover:bg-white/[0.02] transition-colors group ${highlightedId === spec.id ? 'bg-primary/10 border-l-4 border-primary' : ''}`}
+                                    >
+                                        <td className="p-4 pl-6 font-bold text-brand-elec">{spec.category}</td>
+                                        <td className="p-4 font-bold text-white">{spec.component_name}</td>
+                                        <td className="p-4 text-gray-300 font-mono text-sm bg-white/5 rounded-lg w-fit my-2 mx-4 inline-block">{spec.spec_value}</td>
+                                        <td className="p-4 text-gray-500 text-sm max-w-xs truncate">{spec.notes}</td>
+                                        <td className="p-4 text-center">
+                                            {spec.file_url ? (
+                                                <a href={spec.file_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-white transition-colors inline-flex">
+                                                    <span className="material-symbols-outlined text-[18px]">download</span>
+                                                </a>
+                                            ) : '-'}
+                                        </td>
+                                        {canEdit && (
+                                            <td className="p-4 text-right pr-6">
+                                                <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleEdit(spec)} className="p-2 hover:bg-brand-elec/20 hover:text-brand-elec rounded-lg text-gray-400 transition-colors">
+                                                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                                                    </button>
+                                                    {canDelete(spec) && (
+                                                        <button onClick={() => confirmDelete(spec.id)} className="p-2 hover:bg-red-500/20 hover:text-red-500 rounded-lg text-gray-400 transition-colors">
+                                                            <span className="material-symbols-outlined text-[18px]">delete</span>
                                                         </button>
-                                                        {canDelete(spec) && (
-                                                            <button onClick={() => confirmDelete(spec.id)} className="p-2 hover:bg-red-500/20 hover:text-red-500 rounded-lg text-gray-400 transition-colors">
-                                                                <span className="material-symbols-outlined text-[18px]">delete</span>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))
-                                )}
+                                                    )}
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -368,22 +424,12 @@ const TechnicalSpecs: React.FC = () => {
 
             {/* DELETE CONFIRMATION MODAL */}
             {deleteModalOpen && (
-                <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
                     <div className="bg-card-dark border border-white/10 p-8 rounded-[32px] max-w-sm w-full shadow-2xl animate-in zoom-in-95">
-                        <div className="bg-red-500/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
-                            <span className="material-symbols-outlined text-3xl">warning</span>
-                        </div>
-                        <h3 className="text-xl font-black text-white text-center mb-2">¿Eliminar dato?</h3>
-                        <p className="text-gray-400 text-center text-xs mb-8">
-                            ¿Estás seguro de que quieres eliminar este dato y su archivo adjunto? Esta acción es irreversible.
-                        </p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button onClick={() => setDeleteModalOpen(false)} className="py-3 bg-white/5 hover:bg-white/10 text-gray-300 font-bold rounded-xl uppercase text-[10px] tracking-widest transition-colors">
-                                Cancelar
-                            </button>
-                            <button onClick={executeDelete} className="py-3 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl uppercase text-[10px] tracking-widest shadow-glow transition-colors">
-                                Eliminar
-                            </button>
+                        <h3 className="text-xl font-black text-white text-center mb-4">¿Eliminar?</h3>
+                        <div className="flex gap-3 justify-center">
+                            <button onClick={() => setDeleteModalOpen(false)} className="py-2 px-6 bg-white/10 rounded-xl text-xs font-bold">Cancelar</button>
+                            <button onClick={executeDelete} className="py-2 px-6 bg-red-600 text-white rounded-xl text-xs font-bold">Eliminar</button>
                         </div>
                     </div>
                 </div>

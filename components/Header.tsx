@@ -214,7 +214,7 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
           <span className="material-symbols-outlined">logout</span>
         </button>
 
-        <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+        <div className="hidden md:flex items-center gap-3 pl-4 border-l border-white/10">
           <div className="relative">
             <img className="w-10 h-10 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-[#141414] object-cover" src={currentUser?.avatar} alt="P" />
           </div>
