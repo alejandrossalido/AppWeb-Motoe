@@ -87,7 +87,8 @@ const Auth: React.FC = () => {
             role: shouldAutoApprove ? 'owner' : 'member',
             status: shouldAutoApprove ? 'active' : 'pending',
             avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/verified`
         }
       });
 
@@ -118,9 +119,9 @@ const Auth: React.FC = () => {
         </div>
 
         {errorMsg && (
-          <div className={`mb-6 p-4 rounded-2xl flex items-center gap-3 text-xs font-bold animate-in fade-in slide-in-from-bottom-2 ${errorMsg.includes('enviado') ? 'bg-green-500/10 border border-green-500/20 text-green-500' : 'bg-red-500/10 border border-red-500/20 text-red-500'}`}>
+          <div className={`mb-6 p-4 rounded-2xl flex items-center gap-3 text-xs font-bold animate-in fade-in slide-in-from-bottom-2 ${errorMsg.includes('enviado') || errorMsg.includes('exitoso') ? 'bg-green-500/10 border border-green-500/20 text-green-500' : 'bg-red-500/10 border border-red-500/20 text-red-500'}`}>
             <span className="material-symbols-outlined text-base">
-              {errorMsg.includes('enviado') ? 'check_circle' : 'warning'}
+              {errorMsg.includes('enviado') || errorMsg.includes('exitoso') ? 'check_circle' : 'warning'}
             </span>
             {errorMsg}
           </div>

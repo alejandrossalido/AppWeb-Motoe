@@ -11,6 +11,7 @@ import SettingsPage from './pages/SettingsPage';
 import Auth from './pages/Auth';
 import TechnicalSpecs from './pages/TechnicalSpecs';
 import UpdatePassword from './pages/UpdatePassword';
+import VerificationSuccess from './pages/VerificationSuccess';
 import AIChatbot from './components/AIChatbot';
 import UserProfile from './pages/UserProfile';
 import { supabase } from './services/supabase';
@@ -256,6 +257,7 @@ const App: React.FC = () => {
                   <Route path="/historial" element={<HistoryPage />} />
                   <Route path="/calendario" element={<CalendarPage />} />
                   <Route path="/configuracion" element={<SettingsPage />} />
+                  <Route path="/verified" element={<VerificationSuccess />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </>
               )}
