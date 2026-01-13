@@ -208,7 +208,12 @@ const App: React.FC = () => {
     setNotifications(prev => [newNote, ...prev]);
   };
 
-  const logout = () => setCurrentUser(null);
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error('Error signing out:', error);
+    setCurrentUser(null);
+    window.location.hash = '/';
+  };
 
   if (isRecovery) {
     return (

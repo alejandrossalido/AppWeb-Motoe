@@ -9,7 +9,7 @@ import { messaging, VAPID_KEY } from '../services/firebase';
 import { getToken } from 'firebase/messaging';
 
 const SettingsPage: React.FC = () => {
-  const { currentUser, signOut } = useApp();
+  const { currentUser, logout } = useApp();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -310,7 +310,7 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
 
-        <button onClick={signOut} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 font-black rounded-2xl hover:bg-red-500 hover:text-white transition-all text-xs uppercase tracking-widest">
+        <button onClick={logout} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 font-black rounded-2xl hover:bg-red-500 hover:text-white transition-all text-xs uppercase tracking-widest">
           Cerrar Sesión
         </button>
       </div>
