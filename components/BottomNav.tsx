@@ -12,8 +12,9 @@ const BottomNav: React.FC = () => {
         { id: 'dash', icon: 'dashboard', path: '/' },
         { id: 'tasks', icon: 'assignment', path: '/tareas' },
         { id: 'specs', icon: 'dataset', path: '/datos-tecnicos' },
+        { id: 'calendar', icon: 'calendar_month', path: '/calendario' },
+        { id: 'team', icon: 'groups', path: '/equipo' },
         { id: 'lab', icon: 'history_edu', path: '/lab' },
-        { id: 'settings', icon: 'settings', path: '/configuracion' },
     ];
 
     return (

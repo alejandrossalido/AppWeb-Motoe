@@ -108,9 +108,17 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
 
   return (
     <header className="h-20 flex items-center justify-between px-6 lg:px-8 border-b border-white/5 bg-[#141414]/90 backdrop-blur sticky top-0 z-[60]">
-      <div className="flex flex-col">
-        <h2 className="text-lg md:text-xl font-bold text-white leading-tight">{title}</h2>
-        {subtitle && <p className="text-xs text-gray-500 font-bold tracking-widest uppercase">{subtitle}</p>}
+      <div className="flex items-center gap-3">
+        <div className="flex flex-col">
+          <h2 className="text-lg md:text-xl font-bold text-white leading-tight">{title}</h2>
+          {subtitle && <p className="text-xs text-gray-500 font-bold tracking-widest uppercase">{subtitle}</p>}
+        </div>
+        <button
+          onClick={() => navigate('/configuracion')}
+          className="md:hidden p-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[20px]">settings</span>
+        </button>
       </div>
       <div className="flex items-center gap-6">
 
