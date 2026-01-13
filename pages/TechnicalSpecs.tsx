@@ -245,108 +245,110 @@ const TechnicalSpecs: React.FC = () => {
 
             <div className={`flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 space-y-6 lg:space-y-8 pb-32 ${deleteModalOpen ? 'blur-sm' : ''}`}>
 
-                {/* Mobile Add Button Trigger (Accordion) */}
-                {canEdit && !isFormOpen && (
-                    <button
-                        onClick={() => setIsFormOpen(true)}
-                        className="w-full py-4 bg-[#1a1a1a] border border-white/10 border-dashed rounded-2xl flex items-center justify-center gap-2 text-gray-400 hover:bg-white/5 hover:text-white transition-all md:hidden mb-4"
-                    >
-                        <span className="material-symbols-outlined">add_circle</span>
-                        <span className="text-xs font-bold uppercase tracking-widest">Añadir Nuevo Dato</span>
-                    </button>
-                )}
+                {/* Helper for FAB spacing */}
+                <div className="h-20 md:hidden"></div>
 
-                {/* Formulario (Responsive) */}
+                {/* Formulario (Responsive: Modal on Mobile, Block on Desktop) */}
                 {canEdit && (isFormOpen || window.innerWidth >= 768) && (
-                    <div className={`bg-card-dark border border-white/5 rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 shadow-xl ${isFormOpen ? 'animate-in slide-in-from-top-4' : 'hidden md:block'}`}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">add_circle</span>
-                                {editingId ? 'Editar Dato' : 'Nuevo Dato'}
-                            </h3>
-                            {/* Mobile Close Button */}
-                            <button onClick={() => setIsFormOpen(false)} className="md:hidden text-gray-500 hover:text-white">
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
+                    <>
+                        {/* Mobile Modal Backdrop */}
+                        <div className={`md:hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] ${isFormOpen ? 'animate-in fade-in' : 'hidden'}`} onClick={() => setIsFormOpen(false)}></div>
 
-                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Categoría</label>
-                                <div className="relative">
-                                    <select
+                        <div className={`
+                            md:relative md:inset-auto md:bg-card-dark md:transform-none md:w-auto md:h-auto
+                            fixed bottom-0 left-0 right-0 bg-[#1a1a1a] rounded-t-[32px] p-6 shadow-2xl z-[101] max-h-[90vh] overflow-y-auto
+                            ${isFormOpen ? 'animate-in slide-in-from-bottom-10 block' : 'hidden md:block'}
+                            border border-white/5
+                        `}>
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary">add_circle</span>
+                                    {editingId ? 'Editar Dato' : 'Nuevo Dato'}
+                                </h3>
+                                {/* Mobile Close Button */}
+                                <button onClick={() => setIsFormOpen(false)} className="md:hidden w-8 h-8 flex items-center justify-center bg-white/10 rounded-full text-white hover:bg-white/20">
+                                    <span className="material-symbols-outlined text-sm">close</span>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Categoría</label>
+                                    <div className="relative">
+                                        <select
+                                            required
+                                            value={formData.category}
+                                            onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                            className="w-full bg-[#111] border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none appearance-none cursor-pointer"
+                                        >
+                                            <option value="" disabled className="text-gray-500">Seleccionar...</option>
+                                            <option value="General">General</option>
+                                            <option value="Mecánica">Mecánica</option>
+                                            <option value="Eléctrica">Eléctrica</option>
+                                            <option value="Administración">Administración</option>
+                                        </select>
+                                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Componente</label>
+                                    <input
                                         required
-                                        value={formData.category}
-                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full bg-background-dark border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none appearance-none cursor-pointer"
-                                    >
-                                        <option value="" disabled className="text-gray-500">Seleccionar...</option>
-                                        <option value="General">General</option>
-                                        <option value="Mecánica">Mecánica</option>
-                                        <option value="Eléctrica">Eléctrica</option>
-                                        <option value="Administración">Administración</option>
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Componente</label>
-                                <input
-                                    required
-                                    value={formData.component_name}
-                                    onChange={e => setFormData({ ...formData, component_name: e.target.value })}
-                                    placeholder="Ej: Batería HV"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Valor</label>
-                                <input
-                                    value={formData.spec_value}
-                                    onChange={e => setFormData({ ...formData, spec_value: e.target.value })}
-                                    placeholder="Ej: 400V"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Notas</label>
-                                <input
-                                    value={formData.notes}
-                                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                    placeholder="Detalles..."
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
-                                />
-                            </div>
-
-                            <div className="md:col-span-2 lg:col-span-4 flex items-center justify-between mt-4 border-t border-white/5 pt-4">
-                                <div className="flex items-center gap-3">
-                                    <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${file ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50' : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'}`}>
-                                        <span className="material-symbols-outlined text-[18px]">{file ? 'check_circle' : 'attach_file'}</span>
-                                        <span className="text-xs font-bold uppercase tracking-wider">{file ? 'Listo' : 'Adjuntar'}</span>
-                                        <input type="file" onChange={handleFileChange} className="hidden" />
-                                    </label>
+                                        value={formData.component_name}
+                                        onChange={e => setFormData({ ...formData, component_name: e.target.value })}
+                                        placeholder="Ej: Batería HV"
+                                        className="w-full bg-[#111] border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
+                                    />
                                 </div>
 
-                                <div className="flex gap-3">
-                                    {editingId && (
-                                        <button type="button" onClick={handleCancel} className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-                                            Cancelar
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Valor</label>
+                                    <input
+                                        value={formData.spec_value}
+                                        onChange={e => setFormData({ ...formData, spec_value: e.target.value })}
+                                        placeholder="Ej: 400V"
+                                        className="w-full bg-[#111] border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
+                                    />
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Notas</label>
+                                    <input
+                                        value={formData.notes}
+                                        onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                        placeholder="Detalles..."
+                                        className="w-full bg-[#111] border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2 lg:col-span-4 flex items-center justify-between mt-4 border-t border-white/5 pt-4">
+                                    <div className="flex items-center gap-3">
+                                        <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${file ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50' : 'bg-[#111] text-gray-400 hover:text-white border border-white/10'}`}>
+                                            <span className="material-symbols-outlined text-[18px]">{file ? 'check_circle' : 'attach_file'}</span>
+                                            <span className="text-xs font-bold uppercase tracking-wider">{file ? 'Listo' : 'Adjuntar'}</span>
+                                            <input type="file" onChange={handleFileChange} className="hidden" />
+                                        </label>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        {editingId && (
+                                            <button type="button" onClick={handleCancel} className="px-6 py-3 bg-[#111] hover:bg-white/10 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+                                                Cancelar
+                                            </button>
+                                        )}
+                                        <button
+                                            type="submit"
+                                            disabled={uploading}
+                                            className={`px-8 py-3 bg-primary text-black rounded-xl text-xs font-black uppercase tracking-widest shadow-glow hover:scale-105 transition-transform ${uploading ? 'opacity-50 cursor-wait' : ''}`}
+                                        >
+                                            {uploading ? '...' : (editingId ? 'Guardar' : 'Crear')}
                                         </button>
-                                    )}
-                                    <button
-                                        type="submit"
-                                        disabled={uploading}
-                                        className={`px-8 py-3 bg-primary text-black rounded-xl text-xs font-black uppercase tracking-widest shadow-glow hover:scale-105 transition-transform ${uploading ? 'opacity-50 cursor-wait' : ''}`}
-                                    >
-                                        {uploading ? '...' : (editingId ? 'Guardar' : 'Crear')}
-                                    </button>
+                                    </div>
                                 </div>
-                            </div>
-                        </form>
-                    </div>
+                            </form>
+                        </div>
+                    </>
                 )}
 
                 {/* Mobile: Cards View */}

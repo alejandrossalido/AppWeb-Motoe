@@ -64,7 +64,7 @@ const AIChatbot: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[60]">
+    <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-[60]">
       {isOpen ? (
         <div className="w-[350px] h-[500px] bg-card-dark border border-white/10 rounded-2xl flex flex-col shadow-2xl overflow-hidden transition-all duration-300">
           <div className="p-4 bg-primary text-black flex justify-between items-center shrink-0">
