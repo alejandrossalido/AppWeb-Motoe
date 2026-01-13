@@ -14,15 +14,34 @@ const CalendarPage: React.FC = () => {
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const offset = firstDay === 0 ? 6 : firstDay - 1;
+
+    // First day of importance
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+
+    // Days needed from previous month to start on Monday
+    const startDayOfWeek = firstDayOfMonth.getDay(); // 0 is Sunday
+    const paddingDays = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
     const days = [];
-    // 28 días (4 semanas exactas)
-    for (let i = 0; i < 28; i++) {
-      const d = new Date(year, month, i - offset + 1);
-      days.push(d);
+
+    // Previous month padding
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = paddingDays; i > 0; i--) {
+      days.push(new Date(year, month - 1, prevMonthLastDay - i + 1));
     }
+
+    // Current month days
+    for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
+      days.push(new Date(year, month, i));
+    }
+
+    // Next month padding to fill grid (either 35 or 42 cells)
+    const remainingCells = 42 - days.length;
+    for (let i = 1; i <= remainingCells; i++) {
+      days.push(new Date(year, month + 1, i));
+    }
+
     return days;
   }, [currentMonth]);
 
@@ -43,12 +62,12 @@ const CalendarPage: React.FC = () => {
 
   const getDayItems = (date: Date) => {
     const dStr = date.toDateString();
-    const todayStr = new Date().toDateString();
 
     const dayEvents = events.filter(e => new Date(e.start).toDateString() === dStr);
     const completedTasks = tasks.filter(t => t.status === 'completed' && t.completedAt && new Date(t.completedAt).toDateString() === dStr);
+    // Only show published/pending if they are relevant for the date (simplified for visual sanity)
     const publishedTasks = tasks.filter(t => new Date(t.createdAt).toDateString() === dStr && t.status !== 'completed');
-    const pendingTasks = dStr === todayStr ? tasks.filter(t => t.status === 'available' || t.status === 'in_progress') : [];
+    const pendingTasks = tasks.filter(t => (t.status === 'available' || t.status === 'in_progress') && new Date(t.createdAt).toDateString() === dStr);
 
     return { events: dayEvents, completed: completedTasks, published: publishedTasks, pending: pendingTasks };
   };
@@ -57,59 +76,81 @@ const CalendarPage: React.FC = () => {
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-background-dark">
       <Header title="Calendario" subtitle="Eventos y Tareas del Equipo" />
 
-      <div className="p-4 lg:p-8 flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
         {/* Toolbar Estilo Google */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <h3 className="text-xl font-black text-white capitalize hidden sm:block">
-              {currentMonth.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+        <div className="flex items-center justify-between p-4 pb-2">
+          <div className="flex items-center gap-3">
+            {/* MOSTRAR SIEMPRE EL MES */}
+            <h3 className="text-lg md:text-xl font-black text-white capitalize leading-none">
+              {currentMonth.toLocaleString('es-ES', { month: 'long' })} <span className="text-gray-500 text-sm font-bold">{currentMonth.getFullYear()}</span>
             </h3>
-            <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
-              <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-2 hover:bg-white/5 rounded-full text-gray-400"><span className="material-symbols-outlined text-[20px]">chevron_left</span></button>
-              <button onClick={() => setCurrentMonth(new Date())} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary border-x border-white/10">Hoy</button>
-              <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-2 hover:bg-white/5 rounded-full text-gray-400"><span className="material-symbols-outlined text-[20px]">chevron_right</span></button>
+            <div className="flex items-center bg-white/5 rounded-full p-0.5 border border-white/10 ml-2">
+              <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-1.5 hover:bg-white/5 rounded-full text-gray-400"><span className="material-symbols-outlined text-[18px]">chevron_left</span></button>
+              <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-1.5 hover:bg-white/5 rounded-full text-gray-400"><span className="material-symbols-outlined text-[18px]">chevron_right</span></button>
             </div>
           </div>
-          <button onClick={() => { setSelectedDate(new Date()); setShowCreateModal(true); }} className="bg-primary text-black font-black px-4 py-3 rounded-full shadow-glow flex items-center gap-2 text-[10px] uppercase tracking-widest transition-transform active:scale-95">
-            <span className="material-symbols-outlined text-[18px]">add</span> <span className="hidden sm:inline">Nuevo Evento</span>
+          <button onClick={() => { setSelectedDate(new Date()); setShowCreateModal(true); }} className="bg-primary text-black w-10 h-10 rounded-full flex items-center justify-center shadow-glow active:scale-95 transition-transform">
+            <span className="material-symbols-outlined text-[24px]">add</span>
           </button>
         </div>
 
-        {/* Grid Calendario 28 Días */}
-        <div className="flex-1 grid grid-cols-7 border-t border-l border-white/5 rounded-2xl overflow-hidden shadow-2xl bg-card-dark/30">
-          {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map(d => (
-            <div key={d} className="bg-white/[0.02] p-2 text-center text-[8px] font-black text-gray-500 tracking-[0.2em] border-r border-b border-white/5">{d}</div>
-          ))}
+        {/* Grid Calendario */}
+        <div className="flex-1 flex flex-col px-2 pb-2">
 
-          {calendarDays.map((date, i) => {
-            const { events: dayEvents, completed, published, pending } = getDayItems(date);
-            const isToday = date.toDateString() === new Date().toDateString();
-            const totalItems = dayEvents.length + completed.length + published.length + pending.length;
+          {/* Cabecera Días */}
+          <div className="grid grid-cols-7 mb-2">
+            {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => (
+              <div key={d} className="text-center text-[10px] font-bold text-gray-500">{d}</div>
+            ))}
+          </div>
 
-            return (
-              <div
-                key={i}
-                onClick={() => setSelectedDate(date)}
-                className="min-h-[80px] lg:min-h-[120px] p-1 border-r border-b border-white/5 group cursor-pointer hover:bg-white/[0.03] transition-colors relative"
-              >
-                <div className={`w-6 h-6 mx-auto lg:mx-0 flex items-center justify-center rounded-full text-[10px] font-black mb-1 ${isToday ? 'bg-primary text-black' : 'text-gray-500'}`}>
-                  {date.getDate()}
+          {/* Celdas */}
+          <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-[1px] bg-white/5 rounded-xl overflow-hidden border border-white/5">
+            {calendarDays.map((date, i) => {
+              const { events: dayEvents, completed, published, pending } = getDayItems(date);
+              const isToday = date.toDateString() === new Date().toDateString();
+              const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
+
+              // Unified list for display
+              const displayItems = [
+                ...dayEvents.map(e => ({ ...e, _type: 'event' })),
+                ...pending.map(t => ({ ...t, _type: 'task', status: 'pending' })),
+                ...completed.map(t => ({ ...t, _type: 'task', status: 'completed' }))
+              ];
+
+              return (
+                <div
+                  key={i}
+                  onClick={() => setSelectedDate(date)}
+                  className={`bg-[#0f0f0f] flex flex-col p-1 cursor-pointer transition-colors hover:bg-[#1a1a1a] ${!isCurrentMonth ? 'opacity-30' : ''}`}
+                >
+                  <div className={`text-[10px] font-bold mb-1 w-5 h-5 flex items-center justify-center rounded-full shrink-0 ${isToday ? 'bg-primary text-black shadow-[0_0_10px_rgba(0,204,136,0.5)]' : 'text-gray-400'}`}>
+                    {date.getDate()}
+                  </div>
+
+                  <div className="flex-1 flex flex-col gap-1 overflow-hidden">
+                    {displayItems.slice(0, 4).map((item: any, idx) => (
+                      <div
+                        key={idx}
+                        className={`
+                                        h-auto min-h-[14px] px-1.5 rounded-[3px] flex items-center 
+                                        ${item._type === 'event'
+                            ? (item.type === 'meeting' ? 'bg-indigo-500 text-white' : 'bg-purple-500 text-white')
+                            : (item.status === 'pending' ? 'bg-brand-elec text-black' : 'bg-gray-700 text-gray-400 line-through')
+                          }
+                                    `}
+                      >
+                        <span className="text-[9px] font-bold truncate leading-none pt-[1px]">{item.title}</span>
+                      </div>
+                    ))}
+                    {displayItems.length > 4 && (
+                      <div className="text-[8px] text-gray-500 font-bold pl-1">+{displayItems.length - 4} más</div>
+                    )}
+                  </div>
                 </div>
-
-                <div className="flex flex-col gap-0.5 px-0.5 overflow-hidden">
-                  {dayEvents.map(e => (
-                    <div key={e.id} className={`h-1 lg:h-auto lg:px-1.5 lg:py-0.5 rounded text-[8px] font-black uppercase truncate border border-transparent ${e.type === 'meeting' ? 'bg-primary/20 text-primary border-primary/10' : 'bg-brand-elec/20 text-brand-elec border-brand-elec/10'
-                      }`}>
-                      <span className="hidden lg:inline">{e.title}</span>
-                    </div>
-                  ))}
-                  {totalItems > (dayEvents.length) && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-600 mx-auto lg:mx-0 mt-1"></div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
