@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-// 1. Cargamos las librerías necesarias (Igual que antes)
+// SERVICE WORKER VERSION: v2.0 (Logo Fix) <- Esto fuerza la actualización
 importScripts('https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.17.2/firebase-messaging-compat.js');
 
