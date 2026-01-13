@@ -109,7 +109,7 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
   return (
     <header className="h-20 flex items-center justify-between px-6 lg:px-8 border-b border-white/5 bg-[#141414]/90 backdrop-blur sticky top-0 z-[60]">
       <div className="flex flex-col">
-        <h2 className="text-xl font-bold text-white leading-tight">{title}</h2>
+        <h2 className="text-lg md:text-xl font-bold text-white leading-tight">{title}</h2>
         {subtitle && <p className="text-xs text-gray-500 font-bold tracking-widest uppercase">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-6">
@@ -204,8 +204,13 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
           )}
         </div>
 
-        {/* Mobile Logout */}
-        <button onClick={logout} className="md:hidden p-2 rounded-xl hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-colors">
+        {/* Mobile Search Icon (Visual Only) */}
+        <button className="md:hidden p-2 rounded-xl text-gray-400 hover:text-white transition-colors">
+          <span className="material-symbols-outlined">search</span>
+        </button>
+
+        {/* Mobile Logout - HIDDEN (Moved to Settings) */}
+        <button onClick={logout} className="hidden md:hidden p-2 rounded-xl hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-colors">
           <span className="material-symbols-outlined">logout</span>
         </button>
 

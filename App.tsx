@@ -13,6 +13,7 @@ import TechnicalSpecs from './pages/TechnicalSpecs';
 import UpdatePassword from './pages/UpdatePassword';
 import VerificationSuccess from './pages/VerificationSuccess';
 import AIChatbot from './components/AIChatbot';
+import BottomNav from './components/BottomNav';
 import UserProfile from './pages/UserProfile';
 import { supabase } from './services/supabase';
 import logo from './assets/logo.png';
@@ -65,7 +66,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-16 lg:w-64 flex-shrink-0 flex flex-col bg-[#0f0f0f] border-r border-white/5 z-50">
+    <aside className="w-16 lg:w-64 flex-shrink-0 flex-col bg-[#0f0f0f] border-r border-white/5 z-50 hidden md:flex">
       <div className="h-20 flex items-center px-4 lg:px-6 gap-3 border-b border-white/5">
         <img src={logo} alt="UPV MOTOE" className="h-8 lg:h-9 w-auto object-contain hidden lg:block" />
       </div>
@@ -242,7 +243,8 @@ const App: React.FC = () => {
       <Router>
         <div className="flex h-screen w-full bg-background-dark text-white font-display overflow-hidden">
           {currentUser && <Sidebar />}
-          <main className="flex-1 flex flex-col min-w-0 bg-background-dark relative overflow-hidden">
+          {currentUser && <BottomNav />}
+          <main className="flex-1 flex flex-col min-w-0 bg-background-dark relative overflow-hidden pb-24 md:pb-0">
             <Routes>
               {!currentUser ? (
                 <Route path="*" element={<Auth />} />

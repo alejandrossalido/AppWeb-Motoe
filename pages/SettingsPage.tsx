@@ -348,13 +348,13 @@ const SettingsPage: React.FC = () => {
               </div>
             </button>
 
-            <button onClick={logout} className="w-full p-4 flex items-center gap-4 hover:bg-red-500/10 transition-colors text-left group">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-colors">
+            <button onClick={logout} className="w-full p-4 flex items-center gap-4 bg-red-600 hover:bg-red-700 transition-colors text-left group">
+              <div className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center">
                 <span className="material-symbols-outlined">logout</span>
               </div>
               <div>
-                <p className="text-sm font-bold text-red-500">Cerrar Sesión</p>
-                <p className="text-[10px] text-gray-500">Salir de la aplicación</p>
+                <p className="text-sm font-bold text-white">Cerrar Sesión</p>
+                <p className="text-[10px] text-white/70">Salir de la aplicación</p>
               </div>
             </button>
           </div>
