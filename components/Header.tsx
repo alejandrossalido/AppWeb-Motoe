@@ -11,7 +11,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
-  const { currentUser, notifications, setNotifications } = useApp();
+  const { currentUser, notifications, setNotifications, logout } = useApp();
   const [showNotes, setShowNotes] = useState(false);
   const navigate = useNavigate();
 
@@ -203,6 +203,11 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
             </div>
           )}
         </div>
+
+        {/* Mobile Logout */}
+        <button onClick={logout} className="md:hidden p-2 rounded-xl hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-colors">
+          <span className="material-symbols-outlined">logout</span>
+        </button>
 
         <div className="flex items-center gap-3 pl-4 border-l border-white/10">
           <div className="relative">
