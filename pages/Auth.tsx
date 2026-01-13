@@ -26,79 +26,88 @@ const Auth: React.FC = () => {
     setFormData(prev => ({ ...prev, subteam: ORGANIGRAMA[prev.branch][0] }));
   }, [formData.branch]);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setIsLoading(true);
 
-    if (isReset) {
-      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: window.location.origin,
-      });
+    try {
+      if (isReset) {
+        const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+          redirectTo: window.location.origin,
+        });
 
-      if (error) {
-        setErrorMsg(error.message);
-      } else {
-        setErrorMsg("Se ha enviado un enlace de recuperación a tu correo.");
-      }
-      return;
-    }
-
-    if (isLogin) {
-      // Login Logic
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (error) {
-        setErrorMsg(error.message);
+        if (error) {
+          setErrorMsg(error.message);
+        } else {
+          setErrorMsg("Se ha enviado un enlace de recuperación a tu correo.");
+        }
         return;
       }
 
-      // Check Status immediately after login
-      if (data.session?.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('status')
-          .eq('id', data.session.user.id)
-          .single();
+      if (isLogin) {
+        // Login Logic
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
 
-        if (profileError) {
-          // If we can't read the profile, assume pending/error and let App.tsx handle it,
-          // OR show error here. Safe to proceed as App.tsx has a blocker.
-        } else if (profile && profile.status !== 'active' && profile.status !== 'active_owner') { // active_owner is hypothetically handled by role 'owner' usually, but status 'active' is standard
-          // Note: App.tsx checks for 'active'. Just ensuring this function allows flow to proceed.
+        if (error) {
+          setErrorMsg(error.message);
+          return;
         }
-      }
 
-    } else {
-      const validAdminEmails = ['alejandrosalidojimenez@gmail.com', 'alejandrosalidoijmenez@gmail.com'];
-      const isSpecAdmin = validAdminEmails.includes(formData.email.toLowerCase());
-      const shouldAutoApprove = isSpecAdmin;
+        // Check Status immediately after login
+        if (data.session?.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('status')
+            .eq('id', data.session.user.id)
+            .single();
 
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.name,
-            branch: formData.branch,
-            subteam: formData.subteam,
-            role: shouldAutoApprove ? 'owner' : 'member',
-            status: shouldAutoApprove ? 'active' : 'pending',
-            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`
-          },
-          emailRedirectTo: `${window.location.origin}/verified`
+          if (profileError) {
+            // Error handling
+          } else if (profile && profile.status !== 'active' && profile.status !== 'active_owner') {
+            // Status check
+          }
         }
-      });
 
-      if (error) {
-        setErrorMsg(error.message);
       } else {
-        if (data.user && !data.session) {
-          setErrorMsg("Registro exitoso. Por favor verifica tu correo si es necesario.");
+        const validAdminEmails = ['alejandrosalidojimenez@gmail.com', 'alejandrosalidoijmenez@gmail.com'];
+        const isSpecAdmin = validAdminEmails.includes(formData.email.toLowerCase());
+        const shouldAutoApprove = isSpecAdmin;
+
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.name,
+              branch: formData.branch,
+              subteam: formData.subteam,
+              role: shouldAutoApprove ? 'owner' : 'member',
+              status: shouldAutoApprove ? 'active' : 'pending',
+              avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`
+            },
+            emailRedirectTo: `${window.location.origin}/verified`
+          }
+        });
+
+        if (error) {
+          setErrorMsg(error.message);
+        } else {
+          if (data.user && !data.session) {
+            setErrorMsg("Registro exitoso. Por favor verifica tu correo si es necesario.");
+          }
         }
       }
+    } catch (err) {
+      setErrorMsg("Ocurrió un error inesperado via cliente.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -201,8 +210,13 @@ const Auth: React.FC = () => {
             </div>
           )}
 
-          <button type="submit" className="w-full py-5 bg-primary text-black font-black rounded-2xl shadow-glow hover:bg-primary-hover hover:scale-[1.02] transition-all active:scale-95 mt-4 uppercase tracking-widest text-xs">
-            {isReset ? 'Enviar Enlace de Recuperación' : isLogin ? 'Acceder al Portal' : 'Enviar Solicitud'}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-full py-5 bg-primary text-black font-black rounded-2xl shadow-glow transition-all uppercase tracking-widest text-xs mt-4 flex items-center justify-center gap-3 ${isLoading ? 'opacity-70 cursor-wait' : 'hover:bg-primary-hover hover:scale-[1.02] active:scale-95'}`}
+          >
+            {isLoading && <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>}
+            {isReset ? 'Enviar Enlace de Recuperación' : isLogin ? (isLoading ? 'Accediendo...' : 'Acceder al Portal') : (isLoading ? 'Enviando...' : 'Enviar Solicitud')}
           </button>
         </form>
 
@@ -224,8 +238,8 @@ const Auth: React.FC = () => {
             </button>
           )}
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
