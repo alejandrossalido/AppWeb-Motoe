@@ -264,7 +264,7 @@ const App: React.FC = () => {
                 </>
               )}
             </Routes>
-            {currentUser && !window.location.hash.includes('configuracion') && <AIChatbot />}
+            {currentUser && !window.location.hash.includes('configuracion') && !window.location.hash.includes('calendario') && <AIChatbot />}
           </main>
         </div>
       </Router>
