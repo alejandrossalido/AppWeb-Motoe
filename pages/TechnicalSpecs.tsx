@@ -436,6 +436,19 @@ const TechnicalSpecs: React.FC = () => {
                     </div>
                 </div>
             )}
+            {/* Floating Action Button (FAB) for Mobile Add - Above Chatbot */}
+            {canEdit && (
+                <button
+                    onClick={() => {
+                        setEditingId(null);
+                        setFormData({ category: '', component_name: '', spec_value: '', notes: '' });
+                        setIsFormOpen(true);
+                    }}
+                    className="md:hidden fixed bottom-32 right-6 w-14 h-14 bg-primary rounded-full shadow-2xl flex items-center justify-center text-black z-[90] active:scale-95 transition-transform"
+                >
+                    <span className="material-symbols-outlined text-3xl">add</span>
+                </button>
+            )}
         </div>
     );
 };
