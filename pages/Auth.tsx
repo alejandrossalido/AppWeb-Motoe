@@ -18,7 +18,8 @@ const Auth: React.FC = () => {
     email: '',
     password: '',
     branch: 'Mecánica' as Branch,
-    subteam: 'Dinámica'
+    subteam: 'Dinámica',
+    isPartner: false
   });
 
   useEffect(() => {
@@ -85,9 +86,9 @@ const Auth: React.FC = () => {
           options: {
             data: {
               full_name: formData.name,
-              branch: formData.branch,
-              subteam: formData.subteam,
-              role: shouldAutoApprove ? 'owner' : 'member',
+              branch: formData.isPartner ? 'General' : formData.branch,
+              subteam: formData.isPartner ? 'Partner' : formData.subteam,
+              role: formData.isPartner ? 'partner' : (shouldAutoApprove ? 'owner' : 'member'),
               status: shouldAutoApprove ? 'active' : 'pending',
               avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`
             },
@@ -175,38 +176,60 @@ const Auth: React.FC = () => {
           )}
 
           {!isLogin && !isReset && (
-            <div className="grid grid-cols-1 gap-5">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-gray-400 uppercase ml-3 tracking-widest">Rama Principal</label>
-                <div className="relative">
-                  <select
-                    value={formData.branch}
-                    onChange={e => setFormData({ ...formData, branch: e.target.value as Branch })}
-                    className="w-full bg-background-dark border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="Mecánica">Mecánica</option>
-                    <option value="Eléctrica">Eléctrica</option>
-                    <option value="Administración">Administración</option>
-                  </select>
-                  <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
-                </div>
+            <div className="space-y-4">
+              {/* Selector de Tipo (Miembro vs Partner) */}
+              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, isPartner: false })}
+                  className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${!formData.isPartner ? 'bg-primary text-black shadow-glow' : 'text-gray-500 hover:text-white'}`}
+                >
+                  Miembro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, isPartner: true, branch: 'General', subteam: 'Partner' })}
+                  className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${formData.isPartner ? 'bg-indigo-500 text-white shadow-glow' : 'text-gray-500 hover:text-white'}`}
+                >
+                  Partner
+                </button>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-gray-400 uppercase ml-3 tracking-widest">Subgrupo</label>
-                <div className="relative">
-                  <select
-                    value={formData.subteam}
-                    onChange={e => setFormData({ ...formData, subteam: e.target.value })}
-                    className="w-full bg-background-dark border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary outline-none appearance-none cursor-pointer"
-                  >
-                    {ORGANIGRAMA[formData.branch].map(sub => (
-                      <option key={sub} value={sub}>{sub}</option>
-                    ))}
-                  </select>
-                  <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
+              {!formData.isPartner && (
+                <div className="grid grid-cols-1 gap-5 animate-in fade-in slide-in-from-top-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase ml-3 tracking-widest">Rama Principal</label>
+                    <div className="relative">
+                      <select
+                        value={formData.branch}
+                        onChange={e => setFormData({ ...formData, branch: e.target.value as Branch })}
+                        className="w-full bg-background-dark border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary outline-none appearance-none cursor-pointer"
+                      >
+                        <option value="Mecánica">Mecánica</option>
+                        <option value="Eléctrica">Eléctrica</option>
+                        <option value="Administración">Administración</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase ml-3 tracking-widest">Subgrupo</label>
+                    <div className="relative">
+                      <select
+                        value={formData.subteam}
+                        onChange={e => setFormData({ ...formData, subteam: e.target.value })}
+                        className="w-full bg-background-dark border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary outline-none appearance-none cursor-pointer"
+                      >
+                        {ORGANIGRAMA[formData.branch].map(sub => (
+                          <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                      </select>
+                      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">expand_more</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

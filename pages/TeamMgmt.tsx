@@ -77,11 +77,12 @@ const TeamMgmt: React.FC = () => {
   const confirmAction = async () => {
     if (editingUser && pendingRole) {
       const isGlobalRole = pendingRole === 'coordinator' || pendingRole === 'owner';
+      const isPartner = pendingRole === 'partner';
 
       const updates = {
         role: pendingRole,
-        branch: isGlobalRole ? 'General' : pendingBranch,
-        subteam: isGlobalRole ? 'Coordinación' : pendingSubteam
+        branch: (isGlobalRole || isPartner) ? 'General' : pendingBranch,
+        subteam: isGlobalRole ? 'Coordinación' : (isPartner ? 'Partner' : pendingSubteam)
       };
 
       const { error } = await supabase
