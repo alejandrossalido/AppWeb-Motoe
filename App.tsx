@@ -83,10 +83,10 @@ const Sidebar = () => {
 
       <div className="p-2 lg:p-4 border-t border-white/5 space-y-2">
         <Link to="/configuracion" className="flex items-center gap-3 rounded-xl bg-white/5 p-2 cursor-pointer hover:bg-white/10 transition-colors">
-          <img className="h-8 w-8 lg:h-9 lg:w-9 rounded-full border border-primary/30 shrink-0 object-cover"
+          <img
             src={currentUser.avatar}
-            alt="P"
-            onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/9.x/bottts/svg?seed=fallback'; }}
+            className="w-10 h-10 rounded-full border-2 border-primary/20 hover:border-primary/50 transition-colors object-cover"
+            alt="Profile"
           />
           <div className="hidden lg:flex flex-col overflow-hidden">
             <p className="truncate text-xs font-bold text-white">{currentUser.name}</p>

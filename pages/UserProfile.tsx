@@ -97,7 +97,6 @@ const UserProfile: React.FC = () => {
                     <img src={profile.avatar}
                         className="w-24 h-24 rounded-full border-4 border-primary/20 shadow-glow object-cover z-10"
                         alt="Avatar"
-                        onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/9.x/bottts/svg?seed=fallback'; }}
                     />
                     <div className="flex-1 text-center sm:text-left z-10">
                         <h1 className="text-3xl font-black text-white mb-2">{profile.name}</h1>

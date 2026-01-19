@@ -207,7 +207,6 @@ const SettingsPage: React.FC = () => {
                 src={currentUser?.avatar}
                 className="w-full h-full rounded-full object-cover border-4 border-[#141414] ring-2 ring-primary ring-opacity-50 shadow-2xl"
                 alt="Profile"
-                onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/9.x/bottts/svg?seed=fallback'; }}
               />
               <label className="absolute bottom-0 right-0 bg-white text-black p-2 rounded-full cursor-pointer hover:bg-primary transition-colors shadow-lg">
                 <span className="material-symbols-outlined text-[16px] block">photo_camera</span>
