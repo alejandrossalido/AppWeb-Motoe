@@ -1,13 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>EPSA MOTO - Team Operations Portal</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Noto+Sans:wght@400..700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Noto+Sans:wght@400..700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -18,7 +21,7 @@
                         "primary-hover": "#00b377",
                         "background-dark": "#141414",
                         "card-dark": "#212121",
-                        "surface-dark": "#1e1e1e", 
+                        "surface-dark": "#1e1e1e",
                         "surface-light": "#2A2A2A",
                         "border-dark": "#333333",
                         "brand-mech": "#4CCCC4",
@@ -38,19 +41,45 @@
         }
     </script>
     <style>
-        body { margin: 0; padding: 0; background-color: #141414; color: white; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #141414; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #141414;
+            color: white;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #141414;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
         .bg-grid-pattern {
             background-image: linear-gradient(to right, #333 1px, transparent 1px),
-                              linear-gradient(to bottom, #333 1px, transparent 1px);
+                linear-gradient(to bottom, #333 1px, transparent 1px);
             background-size: 40px 40px;
             mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
         }
+
+        img {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
@@ -62,11 +91,13 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
-<meta name="google-site-verification" content="TEUcmwZkRL0Dz-o5DONAimkpIZl_6rAGQ2wPSi4J7Mg" />
+    <link rel="stylesheet" href="/index.css">
+    <meta name="google-site-verification" content="TEUcmwZkRL0Dz-o5DONAimkpIZl_6rAGQ2wPSi4J7Mg" />
 </head>
+
 <body class="font-display selection:bg-primary selection:text-black overflow-hidden">
     <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
