@@ -152,7 +152,7 @@ const TeamMgmt: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8 custom-scroll">
 
         {/* Solicitudes */}
-        {requests.length > 0 && (
+        {requests.length > 0 && currentUser?.role !== 'partner' && (
           <div className="space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
@@ -249,8 +249,14 @@ const TeamMgmt: React.FC = () => {
                     <td className="px-8 py-5 text-center">
                       {(member.id !== currentUser?.id || currentUser.role === 'owner') && (
                         <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setEditingUser(member)} className="p-2 text-gray-500 hover:text-white"><span className="material-symbols-outlined text-[18px]">edit</span></button>
-                          {/* <button onClick={() => handleExpel(member)} className="p-2 text-red-500"><span className="material-symbols-outlined text-[18px]">person_remove</span></button> */}
+                          {/* Edit Button */}
+                          {(canFilter || currentUser.role === 'team_lead') && (
+                            <button onClick={() => setEditingUser(member)} className="p-2 text-gray-500 hover:text-white"><span className="material-symbols-outlined text-[18px]">edit</span></button>
+                          )}
+                          {/* Expel Button - Only for Owners and Coordinators */}
+                          {canFilter && (
+                            <button onClick={() => handleExpel(member)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"><span className="material-symbols-outlined text-[18px]">delete</span></button>
+                          )}
                         </div>
                       )}
                     </td>

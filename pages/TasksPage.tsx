@@ -9,8 +9,8 @@ const TasksPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [targetStatus, setTargetStatus] = useState<TaskStatus>('proposed');
 
-  // Default filter: 'Todas' for global roles, else User's branch
-  const isGlobal = currentUser?.role === 'coordinator' || currentUser?.role === 'owner';
+  // Default filter: 'Todas' for global roles (Owner, Coordinator, Partner), else User's branch
+  const isGlobal = currentUser?.role === 'coordinator' || currentUser?.role === 'owner' || currentUser?.role === 'partner';
   const [filter, setFilter] = useState<Branch | 'Todas'>(isGlobal ? 'Todas' : (currentUser?.branch || 'Todas'));
 
   const [newTask, setNewTask] = useState({
