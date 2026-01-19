@@ -284,11 +284,17 @@ const TeamMgmt: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Asignar Rol</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['member', 'team_lead', 'coordinator', 'owner'].map(r => (
-                    <button key={r} onClick={() => setPendingRole(r as Role)} className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${pendingRole === r ? 'bg-primary text-black border-primary shadow-glow' : 'bg-white/5 text-gray-500 border-white/5 hover:text-white'}`}>
-                      {r === 'team_lead' ? 'Team Lead' : r.replace('_', ' ')}
-                    </button>
-                  ))}
+                  {['member', 'team_lead', 'coordinator', 'owner', 'partner']
+                    .filter(r => {
+                      if (currentUser?.role === 'owner' || currentUser?.role === 'coordinator') return true;
+                      // Team Leads can't assign global roles or partner
+                      return ['member', 'team_lead'].includes(r);
+                    })
+                    .map(r => (
+                      <button key={r} onClick={() => setPendingRole(r as Role)} className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${pendingRole === r ? 'bg-primary text-black border-primary shadow-glow' : 'bg-white/5 text-gray-500 border-white/5 hover:text-white'}`}>
+                        {r === 'team_lead' ? 'Team Lead' : r.replace('_', ' ')}
+                      </button>
+                    ))}
                 </div>
               </div>
 

@@ -54,7 +54,8 @@ const TasksPage: React.FC = () => {
 
   const renderColumn = (status: TaskStatus, title: string) => {
     const filtered = tasks.filter(t => t.status === status && (filter === 'Todas' || t.branch === filter));
-    const canCreate = status === 'proposed' || status === 'available';
+    const isPartner = currentUser?.role === 'partner';
+    const canCreate = (status === 'proposed' || status === 'available') && !isPartner;
 
     return (
       <div className="flex flex-col gap-4 min-w-[280px] lg:min-w-[300px] flex-1">
@@ -92,13 +93,13 @@ const TasksPage: React.FC = () => {
                   {task.creditsValue} <span className="text-[8px] text-gray-600 font-bold">CR</span>
                 </div>
                 <div className="flex gap-1">
-                  {status === 'proposed' && currentUser?.role !== 'member' && (
+                  {status === 'proposed' && currentUser?.role !== 'member' && currentUser?.role !== 'partner' && (
                     <button onClick={() => handleAction(task.id, 'available')} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-black transition-all"><span className="material-symbols-outlined text-[16px]">check</span></button>
                   )}
-                  {status === 'available' && (
+                  {status === 'available' && currentUser?.role !== 'partner' && (
                     <button onClick={() => handleAction(task.id, 'in_progress')} className="p-1.5 bg-primary text-black rounded-lg hover:bg-primary-hover transition-all"><span className="material-symbols-outlined text-[16px]">play_arrow</span></button>
                   )}
-                  {status === 'in_progress' && task.assignedTo === currentUser?.id && (
+                  {status === 'in_progress' && task.assignedTo === currentUser?.id && currentUser?.role !== 'partner' && (
                     <button onClick={() => handleAction(task.id, 'completed')} className="p-1.5 bg-primary text-black rounded-lg hover:bg-primary-hover transition-all"><span className="material-symbols-outlined text-[16px]">done_all</span></button>
                   )}
                 </div>

@@ -88,13 +88,15 @@ const OpsLab: React.FC = () => {
             <h3 className="text-xl font-bold text-white">Sesiones Recientes</h3>
             <span className="px-2 py-0.5 bg-white/10 rounded-full text-xs font-bold text-gray-400 flex items-center">{sessions.length}</span>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-primary text-black px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-glow hover:scale-105 transition-transform flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Nueva Sesión
-          </button>
+          {currentUser?.role !== 'partner' && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-primary text-black px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-glow hover:scale-105 transition-transform flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              Nueva Sesión
+            </button>
+          )}
         </div>
 
         {/* Sessions Feed */}
@@ -129,8 +131,8 @@ const OpsLab: React.FC = () => {
                   </div>
                   <div className="flex flex-col items-end">
                     <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${session.branch === 'Eléctrica' ? 'text-brand-elec border-brand-elec/20 bg-brand-elec/5' :
-                        session.branch === 'Mecánica' ? 'text-brand-mech border-brand-mech/20 bg-brand-mech/5' :
-                          'text-gray-400 border-gray-500/20 bg-gray-500/5'
+                      session.branch === 'Mecánica' ? 'text-brand-mech border-brand-mech/20 bg-brand-mech/5' :
+                        'text-gray-400 border-gray-500/20 bg-gray-500/5'
                       }`}>
                       {session.branch}
                     </span>
