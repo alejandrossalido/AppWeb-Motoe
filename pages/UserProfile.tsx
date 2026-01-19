@@ -94,7 +94,11 @@ const UserProfile: React.FC = () => {
                 {/* Profile Header */}
                 <div className="bg-card-dark border border-white/5 rounded-[32px] p-8 flex flex-col sm:flex-row items-center gap-8 shadow-xl mb-8 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
-                    <img src={profile.avatar} className="w-24 h-24 rounded-full border-4 border-primary/20 shadow-glow object-cover z-10" alt="Avatar" />
+                    <img src={profile.avatar}
+                        className="w-24 h-24 rounded-full border-4 border-primary/20 shadow-glow object-cover z-10"
+                        alt="Avatar"
+                        onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/9.x/bottts/svg?seed=fallback'; }}
+                    />
                     <div className="flex-1 text-center sm:text-left z-10">
                         <h1 className="text-3xl font-black text-white mb-2">{profile.name}</h1>
                         <div className="flex flex-wrap gap-2 justify-center sm:justify-start">

@@ -229,7 +229,11 @@ const TeamMgmt: React.FC = () => {
                   <tr key={member.id} className="hover:bg-white/[0.01] transition-colors group">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <img src={member.avatar} className="w-10 h-10 rounded-full border border-white/10 object-cover" alt="avatar" />
+                        <img src={member.avatar}
+                          className="w-10 h-10 rounded-full border border-white/10 object-cover"
+                          alt="avatar"
+                          onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/9.x/bottts/svg?seed=fallback'; }}
+                        />
                         <div>
                           <p className="text-sm font-black text-white">{member.name} {member.id === currentUser?.id && <span className="text-primary text-[10px] font-bold ml-1">(TÚ)</span>}</p>
                           <p className="text-[10px] text-gray-500">{member.email}</p>

@@ -7,9 +7,9 @@ export const ORGANIGRAMA: Record<Branch, string[]> = {
     'General': ['Coordinación']
 };
 
-// Uses Cloudflare IPFS gateway with correct Images CID (No Extension)
+// Uses GitHub Raw Mirror for maximum speed and stability (Static web server)
 export const getRandomAvatar = () => {
-    // 0 to 9999
-    const randomId = Math.floor(Math.random() * 10000);
-    return `https://cloudflare-ipfs.com/ipfs/QmRRPWG96cmgTn2qSzjwr2qvfNEuhIUfsppMynagfW6xS/${randomId}`;
+    // 1 to 1000 (Mirror subset)
+    const randomId = Math.floor(Math.random() * 1000) + 1;
+    return `https://raw.githubusercontent.com/dli-sky/bored-ape-yacht-club-images/master/images/${randomId}.png`;
 };

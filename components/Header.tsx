@@ -224,7 +224,11 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
 
           <div className="hidden md:flex items-center gap-3 pl-4 border-l border-white/10">
             <div className="relative">
-              <img className="w-10 h-10 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-[#141414] object-cover" src={currentUser?.avatar} alt="P" />
+              <img className="w-10 h-10 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-[#141414] object-cover"
+                src={currentUser?.avatar}
+                alt="P"
+                onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/9.x/bottts/svg?seed=fallback'; }}
+              />
             </div>
           </div>
         </div>
