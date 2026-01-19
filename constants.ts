@@ -7,9 +7,9 @@ export const ORGANIGRAMA: Record<Branch, string[]> = {
     'General': ['Coordinación']
 };
 
-// Uses Cloudflare IPFS (Correcy CID, No Extension)
+// Uses Cloudflare IPFS (Correct Images CID, No Extension)
 export const getRandomAvatar = () => {
     // 0 to 9999
     const randomId = Math.floor(Math.random() * 10000);
-    return `https://cloudflare-ipfs.com/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${randomId}`;
+    return `https://cloudflare-ipfs.com/ipfs/QmRRPWG96cmgTn2qSzjwr2qvfNEuhIUfsppMynagfW6xS/${randomId}`;
 };
