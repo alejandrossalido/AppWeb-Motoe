@@ -179,6 +179,7 @@ const App: React.FC = () => {
               type: 'join',
               branch: u.branch,
               subteam: u.subteam,
+              role: u.role, // Pass the requested role
               status: 'pending',
               createdAt: new Date().toISOString() // We don't have created_at in profile yet, using now
             } as Request));

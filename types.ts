@@ -54,6 +54,7 @@ export interface Request {
   type: 'join' | 'change_team';
   branch: Branch;
   subteam: string;
+  role?: Role; // Added to track requested role (e.g. partner)
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }

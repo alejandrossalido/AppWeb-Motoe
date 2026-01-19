@@ -45,9 +45,14 @@ const TeamMgmt: React.FC = () => {
 
 
   const handleApprove = async (req: Request) => {
+    // If request has a role (e.g. partner), use it. Otherwise default to member.
+    // Also check if the user object in 'users' list (which contains pending users) has a role set.
+    const pendingUser = users.find(u => u.id === req.uid);
+    const roleToAssign = req.role || pendingUser?.role || 'member';
+
     const { error } = await supabase
       .from('profiles')
-      .update({ status: 'active', role: 'member' })
+      .update({ status: 'active', role: roleToAssign })
       .eq('id', req.uid);
 
     if (error) {
@@ -60,7 +65,7 @@ const TeamMgmt: React.FC = () => {
       id: req.uid,
       name: req.fullName,
       email: `${req.uid}`,
-      role: 'member',
+      role: roleToAssign,
       branch: req.branch,
       subteam: req.subteam,
       status: 'active',
@@ -224,8 +229,8 @@ const TeamMgmt: React.FC = () => {
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-white uppercase">{member.branch}</span>
-                        <span className="text-[9px] text-gray-600 font-bold uppercase">{member.subteam}</span>
+                        <span className="text-[10px] font-black text-white uppercase">{member.role === 'partner' ? 'GENERAL' : member.branch}</span>
+                        <span className="text-[9px] text-gray-600 font-bold uppercase">{member.role === 'partner' ? 'PARTNER' : member.subteam}</span>
                       </div>
                     </td>
                     <td className="px-8 py-5">
