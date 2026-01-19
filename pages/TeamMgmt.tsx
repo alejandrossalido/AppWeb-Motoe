@@ -113,17 +113,23 @@ const TeamMgmt: React.FC = () => {
     }
   };
 
-  const handleExpel = (user: User) => {
-    if (confirm(`¿Estás seguro de que deseas expulsar a ${user.name}?`)) {
-      // Logic specific for expel could reuse confirmAction or be separate
-      // For simplicity reusing editingUser flow but setting status would be better.
-      // Assuming expel just removes/deactivates. 
-      // Keeping previous logic hook (which just opened modal in original code, but seemed to want verification)
-      // Correcting: original code opened verify modal. I will follow similar pattern but set pendingRole to role to avoid crash.
-      setEditingUser(user);
-      setPendingRole(user.role);
-      // Note: Expel usually means deleting or status change. Original code was simpler.
-      // I'll stick to 'Edit' flow as requested for Hierarchy. Expel is secondary.
+  const handleExpel = async (user: User) => {
+    if (confirm(`¿Estás seguro de que deseas expulsar DEFINITIVAMENTE a ${user.name}? Esta acción no se puede deshacer.`)) {
+      try {
+        const { error } = await supabase.rpc('delete_user_account', { user_id: user.id });
+
+        if (error) {
+          console.error('Error expelling user:', error);
+          alert('Error al expulsar usuario: ' + error.message);
+        } else {
+          setUsers(prev => prev.filter(u => u.id !== user.id));
+          addNotification('all', 'Miembro Expulsado', `${user.name} ha sido eliminado del equipo.`);
+          alert(`${user.name} ha sido expulsado correctamente.`);
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        alert('Error inesperado al expulsar.');
+      }
     }
   };
 

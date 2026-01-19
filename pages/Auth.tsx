@@ -37,7 +37,7 @@ const Auth: React.FC = () => {
     try {
       if (isReset) {
         const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/`,
         });
 
         if (error) {
@@ -92,7 +92,7 @@ const Auth: React.FC = () => {
               status: shouldAutoApprove ? 'active' : 'pending',
               avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`
             },
-            emailRedirectTo: `${window.location.origin}/verified`
+            emailRedirectTo: `${window.location.origin}/`
           }
         });
 
