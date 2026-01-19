@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import { useApp } from '../App';
 import { User, Branch, Request, Role } from '../types';
 import { supabase } from '../services/supabase';
-import { ORGANIGRAMA } from '../constants';
+import { ORGANIGRAMA, getRandomApe } from '../constants';
 
 const TeamMgmt: React.FC = () => {
   const { users, requests, setUsers, setRequests, currentUser, addNotification } = useApp();
@@ -74,7 +74,7 @@ const TeamMgmt: React.FC = () => {
       status: 'active',
       totalHours: 0,
       totalCredits: 0,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${req.fullName}`
+      avatar: pendingUser?.avatar || getRandomApe()
     };
 
     setUsers(prev => [...prev, newUser]);
