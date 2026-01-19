@@ -7,10 +7,9 @@ export const ORGANIGRAMA: Record<Branch, string[]> = {
     'General': ['Coordinación']
 };
 
-// Uses IPFS Images CID for Bored Apes (Corrected)
+// Uses Cloudflare IPFS gateway with correct Images CID (No Extension)
 export const getRandomAvatar = () => {
     // 0 to 9999
     const randomId = Math.floor(Math.random() * 10000);
-    // Uses public IPFS gateway with correct Images CID.
-    return `https://ipfs.io/ipfs/QmRRPWG96cmgTn2qSzjwr2qvfNEuhIUfsppMynagfW6xS/${randomId}.png`;
+    return `https://cloudflare-ipfs.com/ipfs/QmRRPWG96cmgTn2qSzjwr2qvfNEuhIUfsppMynagfW6xS/${randomId}`;
 };
