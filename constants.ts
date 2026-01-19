@@ -7,9 +7,9 @@ export const ORGANIGRAMA: Record<Branch, string[]> = {
     'General': ['Coordinación']
 };
 
-// Uses Cloudflare IPFS (Correct Images CID, No Extension)
+// Uses CryptoPunks Verified Mirror (GitHub)
 export const getRandomAvatar = () => {
     // 0 to 9999
     const randomId = Math.floor(Math.random() * 10000);
-    return `https://cloudflare-ipfs.com/ipfs/QmRRPWG96cmgTn2qSzjwr2qvfNEuhIUfsppMynagfW6xS/${randomId}`;
+    return `https://raw.githubusercontent.com/ethereumdegen/cryptopunk-icons/master/app/assets/punk${randomId}.png`;
 };
