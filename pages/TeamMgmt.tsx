@@ -48,7 +48,10 @@ const TeamMgmt: React.FC = () => {
     // If request has a role (e.g. partner), use it. Otherwise default to member.
     // Also check if the user object in 'users' list (which contains pending users) has a role set.
     const pendingUser = users.find(u => u.id === req.uid);
-    const roleToAssign = req.role || pendingUser?.role || 'member';
+    let roleToAssign = req.role || pendingUser?.role || 'member';
+
+    // Fallback: If subteam is 'Partner', force role to 'partner' (fixes DB default issues)
+    if (req.subteam === 'Partner') roleToAssign = 'partner';
 
     const { error } = await supabase
       .from('profiles')
@@ -234,7 +237,11 @@ const TeamMgmt: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <span className={`text-[10px] font-black px-2 py-1 rounded-lg border uppercase tracking-wide ${member.role === 'team_lead' ? 'bg-primary/10 text-primary border-primary/20' : 'text-gray-400 bg-white/5 border-white/5'
+                      <span className={`text-[10px] font-black px-2 py-1 rounded-lg border uppercase tracking-wide ${member.role === 'team_lead' ? 'bg-primary/10 text-primary border-primary/20' :
+                          member.role === 'coordinator' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                            member.role === 'owner' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+                              member.role === 'partner' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                'text-gray-400 bg-white/5 border-white/5'
                         }`}>
                         {getRoleLabel(member)}
                       </span>
