@@ -8,9 +8,8 @@ export const ORGANIGRAMA: Record<Branch, string[]> = {
 };
 
 export const BAYC_IPFS_CID = 'QmRRPWG96cmgTn2qSzjdaXB3tQZ9rnf2Qq5I8fE5gC0';
-export const getRandomApe = () => {
-    // There are 10,000 apes (0-9999). We act like we own them all (spectator fun).
-    const randomId = Math.floor(Math.random() * 10000);
-    // Uses Pinata IPFS gateway for maximum reliability
-    return `https://gateway.pinata.cloud/ipfs/${BAYC_IPFS_CID}/${randomId}.png`;
+// Uses DiceBear API for instant, reliable robot avatars
+export const getRandomAvatar = () => {
+    const randomSeed = Math.random().toString(36).substring(7);
+    return `https://api.dicebear.com/9.x/bottts/svg?seed=${randomSeed}`;
 };

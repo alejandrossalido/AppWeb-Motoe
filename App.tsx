@@ -18,7 +18,7 @@ import UserProfile from './pages/UserProfile';
 import { supabase } from './services/supabase';
 import logo from './assets/logo.png';
 import { User, Task, Request, TimeEntry, CalendarEvent, UserStatus, Role, Branch, MotoSpec } from './types';
-import { getRandomApe } from './constants';
+import { getRandomAvatar } from './constants';
 
 interface Notification {
   id: string;
@@ -146,7 +146,7 @@ const App: React.FC = () => {
         status: data.status as UserStatus,
         totalHours: data.total_hours,
         totalCredits: data.total_credits,
-        avatar: data.avatar_url || getRandomApe(),
+        avatar: data.avatar_url || getRandomAvatar(),
       });
     }
   };
@@ -166,7 +166,7 @@ const App: React.FC = () => {
             status: u.status as UserStatus,
             totalHours: u.total_hours,
             totalCredits: u.total_credits,
-            avatar: u.avatar_url || getRandomApe(),
+            avatar: u.avatar_url || getRandomAvatar(),
           }));
           setUsers(mappedUsers);
 

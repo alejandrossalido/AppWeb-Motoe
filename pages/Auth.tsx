@@ -3,7 +3,7 @@ import { supabase } from '../services/supabase';
 import { useApp } from '../App';
 import { Branch, Role, UserStatus, User } from '../types';
 
-import { ORGANIGRAMA, getRandomApe } from '../constants';
+import { ORGANIGRAMA, getRandomAvatar } from '../constants';
 
 import logo from '../assets/logo.png';
 
@@ -90,7 +90,7 @@ const Auth: React.FC = () => {
               subteam: formData.isPartner ? 'Partner' : formData.subteam,
               role: formData.isPartner ? 'partner' : (shouldAutoApprove ? 'owner' : 'member'),
               status: shouldAutoApprove ? 'active' : 'pending',
-              avatar_url: getRandomApe()
+              avatar_url: getRandomAvatar()
             },
             emailRedirectTo: `${window.location.origin}/`
           }
