@@ -153,7 +153,7 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
                           <p className="text-[10px] text-gray-400 uppercase tracking-widest">{r.category}</p>
                         </div>
                       ))}
-                      {renderSection("Bitácora", searchResults.filter(r => r.type === 'log'), "history_edu", (r) => (
+                      {renderSection("Sesiones", searchResults.filter(r => r.type === 'log'), "history_edu", (r) => (
                         <div key={r.id} onClick={() => handleResultClick(r)} className="p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 transition-colors">
                           <p className="text-xs text-white line-clamp-2 italic">"{r.description}"</p>
                           <p className="text-[9px] text-gray-500 font-bold uppercase mt-1 text-right">{r.profiles?.full_name}</p>

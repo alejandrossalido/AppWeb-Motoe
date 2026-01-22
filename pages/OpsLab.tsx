@@ -79,7 +79,7 @@ const OpsLab: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-background-dark">
-      <Header title="Bitácora de Trabajo" subtitle="Registro de actividad del equipo" />
+      <Header title="Sesiones de Trabajo" subtitle="Registro de actividad del equipo" />
 
       <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scroll relative">
         {/* Actions Bar */}
@@ -102,7 +102,7 @@ const OpsLab: React.FC = () => {
         {/* Sessions Feed */}
         <div className="space-y-4 max-w-4xl mx-auto">
           {loading ? (
-            <p className="text-center text-gray-500 animate-pulse">Cargando bitácora...</p>
+            <p className="text-center text-gray-500 animate-pulse">Cargando sesiones...</p>
           ) : sessions.length === 0 ? (
             <div className="text-center py-12 border border-dashed border-white/10 rounded-3xl">
               <span className="material-symbols-outlined text-4xl text-gray-600 mb-2">history_edu</span>

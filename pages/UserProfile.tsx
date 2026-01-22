@@ -122,7 +122,7 @@ const UserProfile: React.FC = () => {
                 {/* Tabs */}
                 <div className="flex gap-6 border-b border-white/5 pb-px mb-6">
                     <button onClick={() => setActiveTab('sessions')} className={`pb-4 px-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'sessions' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-white'}`}>
-                        Bitácora de Trabajo
+                        Sesiones de Trabajo
                     </button>
                     <button onClick={() => setActiveTab('specs')} className={`pb-4 px-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'specs' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-white'}`}>
                         Aportes Técnicos

@@ -60,7 +60,7 @@ const Sidebar = () => {
     { id: 'dash', label: 'Inicio', icon: 'dashboard', path: '/', roles: ['owner', 'coordinator', 'team_lead', 'member', 'partner'] },
     { id: 'tasks', label: 'Tablero Tareas', icon: 'assignment', path: '/tareas', roles: ['owner', 'coordinator', 'team_lead', 'member', 'partner'] },
     { id: 'specs', label: 'Datos Técnicos', icon: 'dataset', path: '/datos-tecnicos', roles: ['owner', 'coordinator', 'team_lead', 'member', 'partner'] },
-    { id: 'lab', label: 'Bitácora', icon: 'history_edu', path: '/lab', roles: ['owner', 'coordinator', 'team_lead', 'member', 'partner'] },
+    { id: 'lab', label: 'Sesiones', icon: 'history_edu', path: '/lab', roles: ['owner', 'coordinator', 'team_lead', 'member', 'partner'] },
     { id: 'calendar', label: 'Calendario', icon: 'calendar_month', path: '/calendario', roles: ['owner', 'coordinator', 'team_lead', 'member', 'partner'] },
     { id: 'team', label: 'Gestión Equipo', icon: 'groups', path: '/equipo', roles: ['owner', 'coordinator', 'team_lead', 'partner'] },
     { id: 'settings', label: 'Configuración', icon: 'settings', path: '/configuracion', roles: ['owner', 'coordinator', 'team_lead', 'member', 'partner'] },
