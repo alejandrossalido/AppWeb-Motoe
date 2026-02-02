@@ -262,7 +262,12 @@ const Auth: React.FC = () => {
           )}
         </div>
       </div >
-    </div >
+      <footer className="absolute bottom-4 text-center text-[10px] text-gray-600 w-full px-4 z-10">
+        <p>
+          <strong>&copy; 2026 UPV MotoE Team.</strong> Plataforma oficial de ingeniería del equipo <strong>EPSA MotoE</strong> (Escuela Politécnica Superior de Alcoy) para MotoStudent.
+        </p>
+      </footer>
+    </div>
   );
 };
 
