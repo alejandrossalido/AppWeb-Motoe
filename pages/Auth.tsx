@@ -113,17 +113,17 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="h-full w-full flex items-center justify-center p-6 bg-grid-pattern relative overflow-hidden">
+    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-grid-pattern relative overflow-y-auto overflow-x-hidden">
       <h1 className="sr-only">Acceso al Portal de Ingeniería - UPV MotoE Team</h1>
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse pointer-events-none"></div>
 
-      <div className="absolute top-12 lg:top-20 left-1/2 -translate-x-1/2 flex items-center justify-center animate-in slide-in-from-top-4 duration-700 z-10">
-        <img src={logo} alt="UPV MOTOE" className="h-24 w-auto object-contain" />
+      <div className="relative z-10 mb-8 lg:mb-10 w-full flex justify-center animate-in slide-in-from-top-4 duration-700">
+        <img src={logo} alt="UPV MOTOE" className="h-20 lg:h-24 w-auto object-contain" />
       </div>
 
-      <div className="w-full max-w-md bg-[#1a1a1a]/90 backdrop-blur-2xl border border-white/10 rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-300 relative z-20">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-black mb-2 text-white">
+      <div className="w-full max-w-md bg-[#1a1a1a]/90 backdrop-blur-2xl border border-white/10 rounded-[40px] p-6 md:p-10 shadow-2xl animate-in zoom-in-95 duration-300 relative z-20 mb-8">
+        <div className="text-center mb-6 md:mb-8">
+          <h2 className="text-2xl md:text-3xl font-black mb-2 text-white">
             {isReset ? 'Recuperar Cuenta' : isLogin ? 'Bienvenido' : 'Nuevo Miembro'}
           </h2>
           <p className="text-gray-500 text-[10px] uppercase tracking-[0.3em] font-black">Portal de Operaciones v2.6 (Check)</p>
@@ -263,7 +263,7 @@ const Auth: React.FC = () => {
           )}
         </div>
       </div >
-      <footer className="absolute bottom-4 text-center text-[10px] text-gray-400 w-full px-4 z-10">
+      <footer className="relative mt-auto py-4 text-center text-[10px] text-gray-400 w-full px-4 z-10">
         <p>
           <strong>&copy; 2026 UPV MotoE Team.</strong> Plataforma oficial de ingeniería del equipo <strong>EPSA MotoE</strong> (Escuela Politécnica Superior de Alcoy) para MotoStudent.
         </p>
