@@ -77,6 +77,18 @@
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        /* Fix para que el autocomplete no ponga fondo blanco */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus {
+            -webkit-text-fill-color: #e5e7eb;
+            /* Color de texto claro (gris/blanco) */
+            -webkit-box-shadow: 0 0 0px 1000px #1f2937 inset !important;
+            /* Cambia #1f2937 por el color exacto del fondo de tus inputs */
+            transition: background-color 5000s ease-in-out 0s;
         }
     </style>
     <script type="importmap">

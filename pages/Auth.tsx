@@ -114,13 +114,14 @@ const Auth: React.FC = () => {
 
   return (
     <div className="h-full w-full flex items-center justify-center p-6 bg-grid-pattern relative overflow-hidden">
+      <h1 className="sr-only">Acceso al Portal de Ingeniería - UPV MotoE Team</h1>
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse"></div>
 
       <div className="absolute top-12 lg:top-20 left-1/2 -translate-x-1/2 flex items-center justify-center animate-in slide-in-from-top-4 duration-700 z-10">
         <img src={logo} alt="UPV MOTOE" className="h-24 w-auto object-contain" />
       </div>
 
-      <div className="w-full max-w-md bg-card-dark/60 backdrop-blur-2xl border border-white/10 rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-300 relative z-20">
+      <div className="w-full max-w-md bg-[#1a1a1a]/90 backdrop-blur-2xl border border-white/10 rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-300 relative z-20">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-black mb-2 text-white">
             {isReset ? 'Recuperar Cuenta' : isLogin ? 'Bienvenido' : 'Nuevo Miembro'}
@@ -262,7 +263,7 @@ const Auth: React.FC = () => {
           )}
         </div>
       </div >
-      <footer className="absolute bottom-4 text-center text-[10px] text-gray-600 w-full px-4 z-10">
+      <footer className="absolute bottom-4 text-center text-[10px] text-gray-400 w-full px-4 z-10">
         <p>
           <strong>&copy; 2026 UPV MotoE Team.</strong> Plataforma oficial de ingeniería del equipo <strong>EPSA MotoE</strong> (Escuela Politécnica Superior de Alcoy) para MotoStudent.
         </p>
