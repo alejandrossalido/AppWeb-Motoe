@@ -69,9 +69,18 @@ const Auth: React.FC = () => {
             .single();
 
           if (profileError) {
-            // Error handling
+            console.error("Profile Fetch Error:", profileError);
+            setErrorMsg("Error al verificar perfil. Contacta con soporte.");
+            // Optional: signOut to prevent weird state?
+            // await supabase.auth.signOut(); 
+            // But maybe they are valid auth, just profile sync issue.
+            // Best to leave session but warn.
           } else if (profile && profile.status !== 'active' && profile.status !== 'active_owner') {
-            // Status check
+            // User is authenticated but not active in DB
+            console.warn("User status:", profile.status);
+            setErrorMsg("Tu cuenta está pendiente de aprobación o inactiva.");
+            // If we don't return here, the 'finally { setIsLoading(false) }' will run,
+            // and the user will see the error message on the form. This is correct.
           }
         }
 
@@ -237,7 +246,7 @@ const Auth: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-5 bg-primary text-black font-black rounded-2xl shadow-glow transition-all uppercase tracking-widest text-xs mt-4 flex items-center justify-center gap-3 ${isLoading ? 'opacity-70 cursor-wait' : 'hover:bg-primary-hover hover:scale-[1.02] active:scale-95'}`}
+            className={`w-full py-5 bg-primary relative z-50 text-black font-black rounded-2xl shadow-glow transition-all uppercase tracking-widest text-xs mt-4 flex items-center justify-center gap-3 ${isLoading ? 'opacity-70 cursor-wait' : 'hover:bg-primary-hover hover:scale-[1.02] active:scale-95'}`}
           >
             {isLoading && <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>}
             {isReset ? 'Enviar Enlace de Recuperación' : isLogin ? (isLoading ? 'Accediendo...' : 'Acceder al Portal') : (isLoading ? 'Enviando...' : 'Enviar Solicitud')}
