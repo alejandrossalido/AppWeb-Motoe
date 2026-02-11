@@ -86,6 +86,7 @@ export interface WorkSession {
   description: string;
   duration_minutes: number;
   created_at: string;
+  file_url?: string;
   profiles?: { // Joined data
     full_name: string;
     avatar_url: string;

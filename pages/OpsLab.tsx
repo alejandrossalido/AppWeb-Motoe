@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import { useApp } from '../App';
 import { supabase } from '../services/supabase';
@@ -13,6 +13,10 @@ const OpsLab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  // File Upload State
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Form State
   const [newSession, setNewSession] = useState({
@@ -55,8 +59,52 @@ const OpsLab: React.FC = () => {
     setLoading(false);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        alert("El archivo es demasiado grande (Máx 5MB)");
+        e.target.value = "";
+        setFile(null);
+        return;
+      }
+      setFile(selectedFile);
+    }
+  };
+
+  const uploadFile = async (fileToUpload: File): Promise<string | null> => {
+    try {
+      setUploading(true);
+      const fileExt = fileToUpload.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `sessions/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('technical-files') // Reusing technical-files bucket
+        .upload(filePath, fileToUpload);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('technical-files').getPublicUrl(filePath);
+      return data.publicUrl;
+    } catch (error) {
+      console.error(error);
+      alert('Error subiendo archivo.');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSaveSession = async () => {
     if (!newSession.description.trim()) return alert("La descripción es obligatoria.");
+
+    let fileUrl = undefined;
+    if (file) {
+      const uploadedUrl = await uploadFile(file);
+      if (!uploadedUrl) return;
+      fileUrl = uploadedUrl;
+    }
 
     const { error } = await supabase
       .from('work_sessions')
@@ -65,7 +113,8 @@ const OpsLab: React.FC = () => {
         branch: newSession.branch,
         subteam: newSession.subteam,
         description: newSession.description,
-        duration_minutes: newSession.duration
+        duration_minutes: newSession.duration,
+        file_url: fileUrl
       });
 
     if (error) {
@@ -73,6 +122,7 @@ const OpsLab: React.FC = () => {
     } else {
       setShowModal(false);
       setNewSession({ ...newSession, description: '' });
+      setFile(null);
       fetchSessions();
     }
   };
@@ -129,14 +179,22 @@ const OpsLab: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${session.branch === 'Eléctrica' ? 'text-brand-elec border-brand-elec/20 bg-brand-elec/5' :
-                      session.branch === 'Mecánica' ? 'text-brand-mech border-brand-mech/20 bg-brand-mech/5' :
-                        'text-gray-400 border-gray-500/20 bg-gray-500/5'
-                      }`}>
-                      {session.branch}
-                    </span>
-                    <span className="text-[10px] text-gray-500 font-bold mt-1">{session.duration_minutes} min</span>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-end">
+                      <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${session.branch === 'Eléctrica' ? 'text-brand-elec border-brand-elec/20 bg-brand-elec/5' :
+                        session.branch === 'Mecánica' ? 'text-brand-mech border-brand-mech/20 bg-brand-mech/5' :
+                          'text-gray-400 border-gray-500/20 bg-gray-500/5'
+                        }`}>
+                        {session.branch}
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-bold mt-1">{session.duration_minutes} min</span>
+                    </div>
+                    {session.file_url && (
+                      <a href={session.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-primary transition-colors">
+                        <span className="material-symbols-outlined text-[14px]">attach_file</span>
+                        Archivo
+                      </a>
+                    )}
                   </div>
                 </div>
                 <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap pl-13 border-l-2 border-white/5 pl-4 ml-4">
@@ -151,7 +209,7 @@ const OpsLab: React.FC = () => {
       {/* New Session Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-card-dark w-full max-w-lg rounded-[32px] p-8 border border-white/10 shadow-2xl animate-in zoom-in-95">
+          <div className="bg-card-dark w-full max-w-lg rounded-[32px] p-8 border border-white/10 shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scroll">
             <h3 className="text-2xl font-black text-white mb-6">Registrar Sesión</h3>
 
             <div className="space-y-4">
@@ -198,11 +256,26 @@ const OpsLab: React.FC = () => {
                   className="w-full h-32 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none resize-none"
                 />
               </div>
+
+              {/* File Upload Button */}
+              <div>
+                <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all border border-dashed ${file ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-500' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/30'}`}>
+                  <span className="material-symbols-outlined text-[20px]">{file ? 'check_circle' : 'attach_file'}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">{file ? file.name : 'Adjuntar Archivo (Opcional)'}</span>
+                  <input type="file" onChange={handleFileChange} className="hidden" />
+                </label>
+              </div>
             </div>
 
             <div className="flex gap-4 mt-8">
               <button onClick={() => setShowModal(false)} className="flex-1 py-4 text-gray-500 font-bold uppercase text-xs tracking-widest hover:text-white transition-colors">Cancelar</button>
-              <button onClick={handleSaveSession} className="flex-1 py-4 bg-primary text-black font-black rounded-xl uppercase text-xs tracking-widest hover:bg-primary-hover shadow-glow transition-all">Guardar Sesión</button>
+              <button
+                onClick={handleSaveSession}
+                disabled={uploading}
+                className={`flex-1 py-4 bg-primary text-black font-black rounded-xl uppercase text-xs tracking-widest hover:bg-primary-hover shadow-glow transition-all ${uploading ? 'opacity-50 cursor-wait' : ''}`}
+              >
+                {uploading ? 'Subiendo...' : 'Guardar Sesión'}
+              </button>
             </div>
           </div>
         </div>

@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import { useApp } from '../App';
-import { Task, TaskStatus, Branch } from '../types';
+import { Task, TaskStatus, Branch, TimeEntry } from '../types';
 
 const TasksPage: React.FC = () => {
-  const { tasks, setTasks, currentUser } = useApp();
+  const { tasks, setTasks, currentUser, setEntries, entries, setCurrentUser } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [targetStatus, setTargetStatus] = useState<TaskStatus>('proposed');
 
@@ -16,6 +16,11 @@ const TasksPage: React.FC = () => {
   const [newTask, setNewTask] = useState({
     title: '', description: '', priority: 'Media' as any, branch: currentUser?.branch || 'Mecánica', subteam: currentUser?.subteam || '', credits: 50
   });
+
+  // Role Helpers
+  const isPartner = currentUser?.role === 'partner';
+  const isMember = currentUser?.role === 'member';
+  const canPublish = currentUser?.role === 'owner' || currentUser?.role === 'coordinator' || currentUser?.role === 'team_lead';
 
   const handleCreateTask = () => {
     const task: Task = {
@@ -33,18 +38,46 @@ const TasksPage: React.FC = () => {
   };
 
   const handleAction = (tid: string, nextStatus: TaskStatus) => {
-    setTasks(tasks.map(t => {
-      if (t.id === tid) {
-        const update: Partial<Task> = { status: nextStatus };
-        if (nextStatus === 'in_progress') update.assignedTo = currentUser?.id;
-        if (nextStatus === 'completed') {
-          update.completedAt = new Date().toISOString();
-          update.completedBy = currentUser?.name;
-        }
-        return { ...t, ...update };
+    const taskIndex = tasks.findIndex(t => t.id === tid);
+    if (taskIndex === -1) return;
+    const task = tasks[taskIndex];
+
+    const updatedTasks = [...tasks];
+    const update: Partial<Task> = { status: nextStatus };
+
+    if (nextStatus === 'in_progress') {
+      update.assignedTo = currentUser?.id;
+    }
+
+    if (nextStatus === 'completed') {
+      update.completedAt = new Date().toISOString();
+      update.completedBy = currentUser?.name;
+
+      if (currentUser) {
+        // 1. Create TimeEntry for History
+        const newEntry: TimeEntry = {
+          id: Math.random().toString(36).substr(2, 9),
+          userId: currentUser.id,
+          clockIn: task.createdAt,
+          clockOut: new Date().toISOString(),
+          durationMinutes: 60, // Default duration for task completion
+          summary: `Tarea Finalizada: ${task.title}`,
+          creditsEarned: task.creditsValue,
+          status: 'validated'
+        };
+        setEntries([...entries, newEntry]);
+
+        // 2. Award Credits
+        const updatedUser = {
+          ...currentUser,
+          totalCredits: currentUser.totalCredits + task.creditsValue
+        };
+        setCurrentUser(updatedUser);
       }
-      return t;
-    }));
+    }
+
+    updatedTasks[taskIndex] = { ...task, ...update };
+    setTasks(updatedTasks);
   };
 
   const openCreateModal = (status: TaskStatus) => {
@@ -54,8 +87,14 @@ const TasksPage: React.FC = () => {
 
   const renderColumn = (status: TaskStatus, title: string) => {
     const filtered = tasks.filter(t => t.status === status && (filter === 'Todas' || t.branch === filter));
-    const isPartner = currentUser?.role === 'partner';
-    const canCreate = (status === 'proposed' || status === 'available') && !isPartner;
+
+    // Permission Logic for "Add Task" button
+    let canAdd = false;
+    if (status === 'proposed' && !isPartner) {
+      canAdd = true; // Members+ can propose
+    } else if (status === 'available' && canPublish) {
+      canAdd = true; // Only Leaders+ can publish directly
+    }
 
     return (
       <div className="flex flex-col gap-4 min-w-[280px] lg:min-w-[300px] flex-1">
@@ -93,21 +132,26 @@ const TasksPage: React.FC = () => {
                   {task.creditsValue} <span className="text-[8px] text-gray-600 font-bold">CR</span>
                 </div>
                 <div className="flex gap-1">
-                  {status === 'proposed' && currentUser?.role !== 'member' && currentUser?.role !== 'partner' && (
-                    <button onClick={() => handleAction(task.id, 'available')} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-black transition-all"><span className="material-symbols-outlined text-[16px]">check</span></button>
+                  {/* Proposed -> Available (Publish): Only Leaders */}
+                  {status === 'proposed' && canPublish && (
+                    <button onClick={() => handleAction(task.id, 'available')} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-black transition-all" title="Publicar Tarea"><span className="material-symbols-outlined text-[16px]">check</span></button>
                   )}
-                  {status === 'available' && currentUser?.role !== 'partner' && (
-                    <button onClick={() => handleAction(task.id, 'in_progress')} className="p-1.5 bg-primary text-black rounded-lg hover:bg-primary-hover transition-all"><span className="material-symbols-outlined text-[16px]">play_arrow</span></button>
+
+                  {/* Available -> In Progress (Start): Everyone except Partner */}
+                  {status === 'available' && !isPartner && (
+                    <button onClick={() => handleAction(task.id, 'in_progress')} className="p-1.5 bg-primary text-black rounded-lg hover:bg-primary-hover transition-all" title="Empezar Tarea"><span className="material-symbols-outlined text-[16px]">play_arrow</span></button>
                   )}
-                  {status === 'in_progress' && task.assignedTo === currentUser?.id && currentUser?.role !== 'partner' && (
-                    <button onClick={() => handleAction(task.id, 'completed')} className="p-1.5 bg-primary text-black rounded-lg hover:bg-primary-hover transition-all"><span className="material-symbols-outlined text-[16px]">done_all</span></button>
+
+                  {/* In Progress -> Completed (Finish): Assigned User OR Leaders */}
+                  {status === 'in_progress' && (task.assignedTo === currentUser?.id || canPublish) && !isPartner && (
+                    <button onClick={() => handleAction(task.id, 'completed')} className="p-1.5 bg-primary text-black rounded-lg hover:bg-primary-hover transition-all" title="Finalizar Tarea"><span className="material-symbols-outlined text-[16px]">done_all</span></button>
                   )}
                 </div>
               </div>
             </div>
           ))}
 
-          {canCreate && (
+          {canAdd && (
             <button
               onClick={() => openCreateModal(status)}
               className="w-full py-4 border-2 border-dashed border-white/5 rounded-2xl text-gray-600 hover:text-primary hover:border-primary/30 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
