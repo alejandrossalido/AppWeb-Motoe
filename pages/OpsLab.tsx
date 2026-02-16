@@ -257,25 +257,28 @@ const OpsLab: React.FC = () => {
                 />
               </div>
 
-              {/* File Upload Button */}
-              <div>
-                <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all border border-dashed ${file ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-500' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/30'}`}>
-                  <span className="material-symbols-outlined text-[20px]">{file ? 'check_circle' : 'attach_file'}</span>
-                  <span className="text-xs font-bold uppercase tracking-wider">{file ? file.name : 'Adjuntar Archivo (Opcional)'}</span>
+
+            </div>
+
+            <div className="flex items-center justify-between mt-8 border-t border-white/5 pt-6">
+              <div className="flex items-center gap-3">
+                <label className={`cursor-pointer flex items-center gap-2 px-4 py-3 rounded-xl transition-all ${file ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-white/10'}`}>
+                  <span className="material-symbols-outlined text-[18px]">{file ? 'check_circle' : 'attach_file'}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">{file ? 'Listo' : 'Adjuntar'}</span>
                   <input type="file" onChange={handleFileChange} className="hidden" />
                 </label>
               </div>
-            </div>
 
-            <div className="flex gap-4 mt-8">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-4 text-gray-500 font-bold uppercase text-xs tracking-widest hover:text-white transition-colors">Cancelar</button>
-              <button
-                onClick={handleSaveSession}
-                disabled={uploading}
-                className={`flex-1 py-4 bg-primary text-black font-black rounded-xl uppercase text-xs tracking-widest hover:bg-primary-hover shadow-glow transition-all ${uploading ? 'opacity-50 cursor-wait' : ''}`}
-              >
-                {uploading ? 'Subiendo...' : 'Guardar Sesión'}
-              </button>
+              <div className="flex gap-3">
+                <button onClick={() => setShowModal(false)} className="px-6 py-3 bg-[#1a1a1a] hover:bg-white/10 text-gray-400 hover:text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all">Cancelar</button>
+                <button
+                  onClick={handleSaveSession}
+                  disabled={uploading}
+                  className={`px-8 py-3 bg-primary text-black font-black rounded-xl uppercase text-xs tracking-widest hover:bg-primary-hover shadow-glow transition-all ${uploading ? 'opacity-50 cursor-wait' : ''}`}
+                >
+                  {uploading ? '...' : 'Guardar'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

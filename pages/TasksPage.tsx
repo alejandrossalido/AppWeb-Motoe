@@ -20,7 +20,9 @@ const TasksPage: React.FC = () => {
   // Role Helpers
   const isPartner = currentUser?.role === 'partner';
   const isMember = currentUser?.role === 'member';
-  const canPublish = currentUser?.role === 'owner' || currentUser?.role === 'coordinator' || currentUser?.role === 'team_lead';
+  const isLeader = currentUser?.role === 'owner' || currentUser?.role === 'coordinator' || currentUser?.role === 'team_lead';
+  // "canPublish" is effectively "isLeader" in this context
+  const canPublish = isLeader;
 
   const handleCreateTask = () => {
     const task: Task = {
@@ -134,7 +136,10 @@ const TasksPage: React.FC = () => {
                 <div className="flex gap-1">
                   {/* Proposed -> Available (Publish): Only Leaders */}
                   {status === 'proposed' && canPublish && (
-                    <button onClick={() => handleAction(task.id, 'available')} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-black transition-all" title="Publicar Tarea"><span className="material-symbols-outlined text-[16px]">check</span></button>
+                    <>
+                      <button onClick={() => handleAction(task.id, 'available')} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-black transition-all" title="Aprobar y Publicar"><span className="material-symbols-outlined text-[16px]">check</span></button>
+                      <button onClick={() => handleAction(task.id, 'rejected')} className="p-1.5 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all" title="Denegar Propuesta"><span className="material-symbols-outlined text-[16px]">close</span></button>
+                    </>
                   )}
 
                   {/* Available -> In Progress (Start): Everyone except Partner */}
