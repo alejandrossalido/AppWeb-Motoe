@@ -1,15 +1,8 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import { useApp } from '../App';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const DASH_DATA = [
-  { name: 'Lun', horas: 0 }, { name: 'Mar', horas: 0 }, { name: 'Mie', horas: 0 },
-  { name: 'Jue', horas: 0 }, { name: 'Vie', horas: 0 }, { name: 'Sab', horas: 0 },
-  { name: 'Dom', horas: 0 },
-];
+import SessionActivityChart from '../components/SessionActivityChart';
 
 const Dashboard: React.FC = () => {
   const { users, events, tasks, logout, notifications, setNotifications, currentUser } = useApp();
@@ -22,7 +15,6 @@ const Dashboard: React.FC = () => {
 
   React.useEffect(() => {
     fetchSessionsToday();
-    // fetchTasks(); // Ideally fetch real tasks here too if not in App context
   }, []);
 
   const fetchSessionsToday = async () => {
@@ -49,36 +41,33 @@ const Dashboard: React.FC = () => {
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <Header title="Panel Operativo" subtitle="Gestión de equipo UPV Motoe" />
 
-      <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8 custom-scroll">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-          <MetricCard label="Horas Equipo" value={`${users.reduce((acc, u) => acc + u.totalHours, 0).toFixed(0)}h`} trend="+12%" icon="timer" color="text-primary" />
-          <MetricCard label="Créditos Acum." value={users.reduce((acc, u) => acc + u.totalCredits, 0).toLocaleString()} trend="+5%" icon="stars" color="text-brand-elec" />
-          <MetricCard label="Tasks Activas" value={(currentUser?.role === 'coordinator' || currentUser?.role === 'owner' ? activeTasks : activeTasks.filter(t => t.branch === currentUser?.branch)).length.toString()} trend="OK" icon="assignment_late" color="text-blue-400" />
-          <MetricCard label="Sesiones Hoy" value={sessionsToday.toString()} trend="Hoy" icon="bolt" color="text-brand-admin" />
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 custom-scroll">
+
+        {/* Top Metric Cards - Realigned */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+          <MetricCard
+            label="Tasks Activas"
+            value={(currentUser?.role === 'coordinator' || currentUser?.role === 'owner' ? activeTasks : activeTasks.filter(t => t.branch === currentUser?.branch)).length.toString()}
+            trend="OK"
+            icon="assignment_late"
+            color="text-blue-400"
+          />
+          <MetricCard
+            label="Sesiones Hoy"
+            value={sessionsToday.toString()}
+            trend="Hoy"
+            icon="bolt"
+            color="text-brand-admin"
+          />
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Main Chart Section */}
           <div className="xl:col-span-2 space-y-6">
-            <div className="bg-card-dark rounded-3xl border border-white/5 p-6 shadow-xl relative overflow-hidden">
+            <div className="bg-card-dark rounded-3xl border border-white/5 p-6 shadow-xl relative overflow-hidden h-[450px] flex flex-col">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-              <h3 className="text-lg font-bold mb-6">Actividad Semanal</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={DASH_DATA}>
-                    <defs>
-                      <linearGradient id="colorHoras" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#00cc88" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#00cc88" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#666', fontSize: 12 }} />
-                    <YAxis hide />
-                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '12px' }} />
-                    <Area type="monotone" dataKey="horas" stroke="#00cc88" strokeWidth={3} fillOpacity={1} fill="url(#colorHoras)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {/* Inserted SessionActivityChart */}
+              <SessionActivityChart />
             </div>
 
             <div className="bg-card-dark rounded-3xl border border-white/5 p-6 shadow-xl">
