@@ -13,10 +13,6 @@ const Dashboard: React.FC = () => {
   // State for dynamic dashboard data
   const [sessionsToday, setSessionsToday] = React.useState(0);
 
-  React.useEffect(() => {
-    fetchSessionsToday();
-  }, []);
-
   const fetchSessionsToday = async () => {
     // Get start of today
     const startOfDay = new Date();
@@ -36,13 +32,12 @@ const Dashboard: React.FC = () => {
   React.useEffect(() => {
     fetchSessionsToday();
 
-    // Subscribe to real-time changes
+    // 1. Realtime Subscription
     const importSupabase = async () => {
       const { supabase } = await import('../services/supabase');
       const channel = supabase
         .channel('dashboard_metrics')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_sessions' }, (payload) => {
-          // Determine if new session is from today (Server time is UTC usually, but simple check is enough or just refetch)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'work_sessions' }, () => {
           fetchSessionsToday();
         })
         .subscribe();
@@ -53,7 +48,14 @@ const Dashboard: React.FC = () => {
     };
 
     const cleanupPromise = importSupabase();
-    return () => { cleanupPromise.then(cleanup => cleanup()); };
+
+    // 2. Polling Fallback (Every 5 seconds)
+    const interval = setInterval(fetchSessionsToday, 5000);
+
+    return () => {
+      cleanupPromise.then(cleanup => cleanup());
+      clearInterval(interval);
+    };
   }, []);
 
   const markAllRead = () => {

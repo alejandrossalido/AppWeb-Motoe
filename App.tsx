@@ -229,8 +229,11 @@ const App: React.FC = () => {
         })
         .subscribe();
 
+      const interval = setInterval(fetchTasks, 5000);
+
       return () => {
         supabase.removeChannel(channel);
+        clearInterval(interval);
       };
     }
   }, [currentUser]);
