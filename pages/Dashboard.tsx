@@ -33,6 +33,29 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  React.useEffect(() => {
+    fetchSessionsToday();
+
+    // Subscribe to real-time changes
+    const importSupabase = async () => {
+      const { supabase } = await import('../services/supabase');
+      const channel = supabase
+        .channel('dashboard_metrics')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_sessions' }, (payload) => {
+          // Determine if new session is from today (Server time is UTC usually, but simple check is enough or just refetch)
+          fetchSessionsToday();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanupPromise = importSupabase();
+    return () => { cleanupPromise.then(cleanup => cleanup()); };
+  }, []);
+
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => (n.userId === currentUser?.id || n.userId === 'all') ? { ...n, read: true } : n));
   };

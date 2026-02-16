@@ -197,8 +197,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (currentUser) {
-      // Fetch Tasks
-      supabase.from('tasks').select('*').then(({ data, error }) => {
+      const fetchTasks = async () => {
+        const { data, error } = await supabase.from('tasks').select('*');
         if (!error && data) {
           const mappedTasks: Task[] = data.map((t: any) => ({
             id: t.id,
@@ -208,7 +208,6 @@ const App: React.FC = () => {
             status: t.status,
             branch: t.branch,
             subteam: t.subteam,
-
             icon: t.icon || 'assignment',
             assignedTo: t.assigned_to,
             createdBy: t.created_by,
@@ -218,7 +217,21 @@ const App: React.FC = () => {
           }));
           setTasks(mappedTasks);
         }
-      });
+      };
+
+      fetchTasks();
+
+      // Realtime Subscription
+      const channel = supabase
+        .channel('global_tasks')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
+          fetchTasks();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [currentUser]);
 
