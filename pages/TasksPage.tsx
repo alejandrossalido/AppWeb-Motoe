@@ -14,7 +14,7 @@ const TasksPage: React.FC = () => {
   const [filter, setFilter] = useState<Branch | 'Todas'>(isGlobal ? 'Todas' : (currentUser?.branch || 'Todas'));
 
   const [newTask, setNewTask] = useState({
-    title: '', description: '', priority: 'Media' as any, branch: currentUser?.branch || 'Mecánica', subteam: currentUser?.subteam || '', credits: 50
+    title: '', description: '', priority: 'Media' as any, branch: currentUser?.branch || 'Mecánica', subteam: currentUser?.subteam || ''
   });
 
   // Role Helpers
@@ -29,14 +29,13 @@ const TasksPage: React.FC = () => {
       id: Math.random().toString(36).substr(2, 9),
       ...newTask,
       status: targetStatus,
-      creditsValue: newTask.credits,
       icon: 'assignment',
       createdBy: currentUser?.id || 'u0',
       createdAt: new Date().toISOString()
     };
     setTasks([...tasks, task]);
     setShowModal(false);
-    setNewTask({ title: '', description: '', priority: 'Media', branch: currentUser?.branch || 'Mecánica', subteam: currentUser?.subteam || '', credits: 50 });
+    setNewTask({ title: '', description: '', priority: 'Media', branch: currentUser?.branch || 'Mecánica', subteam: currentUser?.subteam || '' });
   };
 
   const handleAction = (tid: string, nextStatus: TaskStatus) => {
@@ -64,17 +63,16 @@ const TasksPage: React.FC = () => {
           clockOut: new Date().toISOString(),
           durationMinutes: 60, // Default duration for task completion
           summary: `Tarea Finalizada: ${task.title}`,
-          creditsEarned: task.creditsValue,
           status: 'validated'
         };
         setEntries([...entries, newEntry]);
 
-        // 2. Award Credits
-        const updatedUser = {
-          ...currentUser,
-          totalCredits: currentUser.totalCredits + task.creditsValue
-        };
-        setCurrentUser(updatedUser);
+        // 2. Award Credits - REMOVED
+        // const updatedUser = {
+        //   ...currentUser,
+        //   totalCredits: currentUser.totalCredits + task.creditsValue
+        // };
+        // setCurrentUser(updatedUser);
       }
     }
 
@@ -130,8 +128,7 @@ const TasksPage: React.FC = () => {
 
               <div className="flex items-center justify-between pt-4 border-t border-white/5">
                 <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400">
-                  <span className="material-symbols-outlined text-[14px] text-primary">stars</span>
-                  {task.creditsValue} <span className="text-[8px] text-gray-600 font-bold">CR</span>
+                  {/* Credits Removed */}
                 </div>
                 <div className="flex gap-1">
                   {/* Proposed -> Available (Publish): Only Leaders */}
@@ -204,7 +201,6 @@ const TasksPage: React.FC = () => {
                   <option value="Media" className="bg-[#1a1a1a] text-white">Prioridad Media</option>
                   <option value="Alta" className="bg-[#1a1a1a] text-white">Prioridad Alta</option>
                 </select>
-                <input type="number" value={newTask.credits} onChange={e => setNewTask({ ...newTask, credits: parseInt(e.target.value) })} className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none" placeholder="Créditos" />
               </div>
             </div>
             <div className="flex gap-4 mt-10">

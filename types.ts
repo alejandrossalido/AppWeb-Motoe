@@ -14,7 +14,7 @@ export interface User {
   subteam: string;
   status: UserStatus;
   totalHours: number;
-  totalCredits: number;
+
   avatar: string;
   currentClockIn?: string; // ISO string
 }
@@ -28,7 +28,7 @@ export interface Task {
   branch: Branch;
   subteam: string;
   assignedTo?: string;
-  creditsValue: number;
+
   icon: string;
   createdBy: string;
   createdAt: string; // ISO string
@@ -43,7 +43,7 @@ export interface TimeEntry {
   clockOut?: string;
   durationMinutes: number;
   summary: string;
-  creditsEarned: number;
+
   status: 'active' | 'completed' | 'validated';
 }
 

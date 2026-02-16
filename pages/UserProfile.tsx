@@ -39,7 +39,7 @@ const UserProfile: React.FC = () => {
                     subteam: userData.subteam,
                     status: userData.status,
                     totalHours: userData.total_hours,
-                    totalCredits: userData.total_credits,
+
                     avatar: userData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.full_name}`
                 });
             }
@@ -111,11 +111,7 @@ const UserProfile: React.FC = () => {
                             <p className="text-2xl font-black text-white">{profile.totalHours.toFixed(1)}</p>
                             <p className="text-[9px] font-bold text-gray-500 uppercase">Horas</p>
                         </div>
-                        <div className="w-px bg-white/10 h-10"></div>
-                        <div className="text-center">
-                            <p className="text-2xl font-black text-primary">{profile.totalCredits}</p>
-                            <p className="text-[9px] font-bold text-gray-500 uppercase">Créditos</p>
-                        </div>
+
                     </div>
                 </div>
 

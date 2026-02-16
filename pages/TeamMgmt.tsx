@@ -73,7 +73,7 @@ const TeamMgmt: React.FC = () => {
       subteam: req.subteam,
       status: 'active',
       totalHours: 0,
-      totalCredits: 0,
+
       avatar: pendingUser?.avatar || getRandomAvatar()
     };
 

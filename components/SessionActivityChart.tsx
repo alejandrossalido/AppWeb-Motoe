@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     AreaChart,
     Area,
@@ -9,58 +9,125 @@ import {
     ResponsiveContainer,
     TooltipProps,
 } from 'recharts';
+import { supabase } from '../services/supabase';
 
 type TimeFrame = '6H' | '24H' | '7D' | '1Y';
 
 const SessionActivityChart: React.FC = () => {
     const [timeFrame, setTimeFrame] = useState<TimeFrame>('7D');
     const [data, setData] = useState<any[]>([]);
+    const [trendColor, setTrendColor] = useState('#00cc88'); // Default Green
 
-    // Mock Data Generators
-    const generateData = (frame: TimeFrame) => {
+    const fetchData = async () => {
         const now = new Date();
-        let points = 20;
-        let formatLabel = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        let interval = 1000 * 60 * 15; // 15 mins
+        const startTime = new Date();
+
+        // Timeframe Logic
+        if (timeFrame === '6H') startTime.setHours(now.getHours() - 6);
+        else if (timeFrame === '24H') startTime.setHours(now.getHours() - 24);
+        else if (timeFrame === '7D') startTime.setDate(now.getDate() - 7);
+        else if (timeFrame === '1Y') startTime.setFullYear(now.getFullYear() - 1);
+
+        // HARD CONSTRAINT: Start from Feb 16, 2026 (Launch Date)
+        const launchDate = new Date('2026-02-16T00:00:00');
+        const effectiveStart = startTime < launchDate ? launchDate : startTime;
+
+        const { data: sessions, error } = await supabase
+            .from('work_sessions')
+            .select('created_at, duration_minutes')
+            .gte('created_at', effectiveStart.toISOString())
+            .order('created_at', { ascending: true });
+
+        if (error || !sessions) {
+            console.error('Error fetching sessions:', error);
+            setData([]); // Empty state on error
+            return;
+        }
+
+        // Process Data
+        const processedData = processSessions(sessions, timeFrame, effectiveStart, now);
+        setData(processedData);
+
+        // Determine Trend Color
+        if (processedData.length > 1) {
+            const first = processedData[0].value;
+            const last = processedData[processedData.length - 1].value;
+            setTrendColor(last >= first ? '#00cc88' : '#ef4444');
+        } else {
+            setTrendColor('#00cc88'); // Default to green if not enough data
+        }
+    };
+
+    const processSessions = (sessions: any[], frame: TimeFrame, start: Date, end: Date) => {
+        // Create buckets
+        const buckets: { [key: string]: number } = {};
+        let intervalMs = 0;
+        let formatKey = (d: Date) => '';
 
         if (frame === '6H') {
-            points = 24; // Every 15 mins for 6 hours
-            interval = 1000 * 60 * 15;
+            intervalMs = 1000 * 60 * 15; // 15 mins
+            formatKey = (d) => {
+                const s = new Date(Math.floor(d.getTime() / intervalMs) * intervalMs);
+                return s.toISOString(); // Use ISO as key for sorting
+            };
         } else if (frame === '24H') {
-            points = 24; // Hourly
-            interval = 1000 * 60 * 60;
-            formatLabel = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            intervalMs = 1000 * 60 * 60; // 1 Hour
+            formatKey = (d) => {
+                d.setMinutes(0, 0, 0);
+                return d.toISOString();
+            };
         } else if (frame === '7D') {
-            points = 14; // Every 12 hours approx, or daily * 2
-            interval = 1000 * 60 * 60 * 12;
-            formatLabel = (d: Date) => d.toLocaleDateString([], { weekday: 'short' });
+            intervalMs = 1000 * 60 * 60 * 24; // 1 Day
+            formatKey = (d) => {
+                d.setHours(0, 0, 0, 0);
+                return d.toISOString();
+            };
         } else if (frame === '1Y') {
-            points = 12; // Monthly
-            interval = 1000 * 60 * 60 * 24 * 30;
-            formatLabel = (d: Date) => d.toLocaleDateString([], { month: 'short' });
+            intervalMs = 1000 * 60 * 60 * 24 * 30; // ~1 Month
+            formatKey = (d) => {
+                d.setDate(1); d.setHours(0, 0, 0, 0);
+                return d.toISOString();
+            };
         }
 
-        const newData = [];
-        let baseValue = 10;
-
-        // Generate backwards so current time is last
-        for (let i = points - 1; i >= 0; i--) {
-            const time = new Date(now.getTime() - i * interval);
-            // Random walk smoothing
-            const change = (Math.random() - 0.5) * 5;
-            baseValue = Math.max(2, baseValue + change);
-
-            newData.push({
-                timestamp: time.toISOString(),
-                label: formatLabel(time),
-                value: Math.round(baseValue),
-            });
+        // Initialize Buckets (Fill with 0s)
+        // Ensure we handle empty range if start > end (e.g. fresh launch)
+        if (start <= end) {
+            for (let t = start.getTime(); t <= end.getTime(); t += intervalMs) {
+                buckets[formatKey(new Date(t))] = 0;
+            }
         }
-        return newData;
+
+
+        // Fill Data
+        sessions.forEach(s => {
+            const key = formatKey(new Date(s.created_at));
+            if (buckets[key] !== undefined) {
+                buckets[key] += 1; // Count sessions
+            }
+        });
+
+        // Convert to Array
+        return Object.entries(buckets).sort().map(([iso, count]) => {
+            const date = new Date(iso);
+            let label = '';
+            if (frame === '6H' || frame === '24H') label = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            else if (frame === '7D') label = date.toLocaleDateString([], { weekday: 'short' });
+            else label = date.toLocaleDateString([], { month: 'short' });
+
+            return {
+                timestamp: iso,
+                label,
+                value: count
+            };
+        });
     };
 
     useEffect(() => {
-        setData(generateData(timeFrame));
+        fetchData();
+        // Poll for updates every minute to keep "LIVE" feel
+        const interval = setInterval(fetchData, 60000);
+        return () => clearInterval(interval);
     }, [timeFrame]);
 
     const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
@@ -69,8 +136,8 @@ const SessionActivityChart: React.FC = () => {
                 <div className="bg-neutral-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl shadow-2xl">
                     <p className="text-gray-400 text-xs mb-1">{payload[0].payload.label}</p>
                     <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[#00cc88] animate-pulse" />
-                        <p className="text-[#00cc88] font-bold text-lg">
+                        <span className={`w-2 h-2 rounded-full animate-pulse`} style={{ backgroundColor: trendColor }} />
+                        <p className={`font-bold text-lg`} style={{ color: trendColor }}>
                             {payload[0].value} <span className="text-xs font-normal text-gray-500">sessions</span>
                         </p>
                     </div>
@@ -85,9 +152,9 @@ const SessionActivityChart: React.FC = () => {
             {/* Header & Controls */}
             <div className="flex items-center justify-between mb-6 px-2">
                 <div className="flex items-baseline gap-3">
-                    <h3 className="text-lg font-bold text-white">Session Market</h3>
-                    <span className="text-xs font-mono text-[#00cc88] flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#00cc88] animate-pulse" />
+                    <h3 className="text-lg font-bold text-white uppercase tracking-wider">TEAM MOMENTUM</h3>
+                    <span className="text-xs font-mono flex items-center gap-1" style={{ color: trendColor }}>
+                        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: trendColor }} />
                         LIVE
                     </span>
                 </div>
@@ -100,9 +167,10 @@ const SessionActivityChart: React.FC = () => {
                             className={`
                 px-3 py-1 text-[10px] font-bold rounded-md transition-all
                 ${timeFrame === tf
-                                    ? 'bg-[#00cc88]/10 text-[#00cc88] shadow-[0_0_10px_rgba(0,204,136,0.2)]'
+                                    ? `bg-[${trendColor}]/10 shadow-[0_0_10px_rgba(0,0,0,0.2)]`
                                     : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}
               `}
+                            style={timeFrame === tf ? { color: trendColor, backgroundColor: `${trendColor}1A` } : {}}
                         >
                             {tf}
                         </button>
@@ -116,8 +184,8 @@ const SessionActivityChart: React.FC = () => {
                     <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#00cc88" stopOpacity={0.4} />
-                                <stop offset="95%" stopColor="#00cc88" stopOpacity={0} />
+                                <stop offset="5%" stopColor={trendColor} stopOpacity={0.4} />
+                                <stop offset="95%" stopColor={trendColor} stopOpacity={0} />
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={false} stroke="rgba(255,255,255,0.05)" />
@@ -129,12 +197,12 @@ const SessionActivityChart: React.FC = () => {
                             dy={10}
                             minTickGap={30}
                         />
-                        <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
-                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#00cc88', strokeWidth: 1, strokeDasharray: '4 4', strokeOpacity: 0.5 }} />
+                        <YAxis hide domain={['dataMin', 'dataMax + 1']} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: trendColor, strokeWidth: 1, strokeDasharray: '4 4', strokeOpacity: 0.5 }} />
                         <Area
                             type="monotone"
                             dataKey="value"
-                            stroke="#00cc88"
+                            stroke={trendColor}
                             strokeWidth={2}
                             fillOpacity={1}
                             fill="url(#colorGradient)"

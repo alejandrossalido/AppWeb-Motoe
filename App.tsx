@@ -149,7 +149,7 @@ const App: React.FC = () => {
         subteam: data.subteam,
         status: data.status as UserStatus,
         totalHours: data.total_hours,
-        totalCredits: data.total_credits,
+
         avatar: data.avatar_url || getRandomAvatar(),
       });
     }
@@ -169,7 +169,7 @@ const App: React.FC = () => {
             subteam: u.subteam,
             status: u.status as UserStatus,
             totalHours: u.total_hours,
-            totalCredits: u.total_credits,
+
             avatar: u.avatar_url || getRandomAvatar(),
           }));
           setUsers(mappedUsers);
@@ -208,7 +208,7 @@ const App: React.FC = () => {
             status: t.status,
             branch: t.branch,
             subteam: t.subteam,
-            creditsValue: t.credits_value || t.creditsValue || 0, // Handle both cases just in case
+
             icon: t.icon || 'assignment',
             assignedTo: t.assigned_to,
             createdBy: t.created_by,
