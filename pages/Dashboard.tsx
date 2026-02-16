@@ -6,9 +6,9 @@ import { useApp } from '../App';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const DASH_DATA = [
-  { name: 'Lun', horas: 12 }, { name: 'Mar', horas: 18 }, { name: 'Mie', horas: 15 },
-  { name: 'Jue', horas: 25 }, { name: 'Vie', horas: 22 }, { name: 'Sab', horas: 30 },
-  { name: 'Dom', horas: 10 },
+  { name: 'Lun', horas: 0 }, { name: 'Mar', horas: 0 }, { name: 'Mie', horas: 0 },
+  { name: 'Jue', horas: 0 }, { name: 'Vie', horas: 0 }, { name: 'Sab', horas: 0 },
+  { name: 'Dom', horas: 0 },
 ];
 
 const Dashboard: React.FC = () => {
@@ -16,6 +16,30 @@ const Dashboard: React.FC = () => {
 
   const activeTasks = tasks.filter(t => t.status === 'in_progress');
   const myNotifications = notifications.filter(n => n.userId === currentUser?.id || n.userId === 'all').slice(0, 5);
+
+  // State for dynamic dashboard data
+  const [sessionsToday, setSessionsToday] = React.useState(0);
+
+  React.useEffect(() => {
+    fetchSessionsToday();
+    // fetchTasks(); // Ideally fetch real tasks here too if not in App context
+  }, []);
+
+  const fetchSessionsToday = async () => {
+    // Get start of today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const { count, error } = await import('../services/supabase').then(m => m.supabase
+      .from('work_sessions')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfDay.toISOString())
+    );
+
+    if (!error && count !== null) {
+      setSessionsToday(count);
+    }
+  };
 
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => (n.userId === currentUser?.id || n.userId === 'all') ? { ...n, read: true } : n));
@@ -30,7 +54,7 @@ const Dashboard: React.FC = () => {
           <MetricCard label="Horas Equipo" value={`${users.reduce((acc, u) => acc + u.totalHours, 0).toFixed(0)}h`} trend="+12%" icon="timer" color="text-primary" />
           <MetricCard label="Créditos Acum." value={users.reduce((acc, u) => acc + u.totalCredits, 0).toLocaleString()} trend="+5%" icon="stars" color="text-brand-elec" />
           <MetricCard label="Tasks Activas" value={(currentUser?.role === 'coordinator' || currentUser?.role === 'owner' ? activeTasks : activeTasks.filter(t => t.branch === currentUser?.branch)).length.toString()} trend="OK" icon="assignment_late" color="text-blue-400" />
-          <MetricCard label="Sesiones Hoy" value="8" trend="+2" icon="bolt" color="text-brand-admin" />
+          <MetricCard label="Sesiones Hoy" value={sessionsToday.toString()} trend="Hoy" icon="bolt" color="text-brand-admin" />
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

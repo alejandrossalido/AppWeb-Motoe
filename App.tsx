@@ -195,21 +195,40 @@ const App: React.FC = () => {
   }, [currentUser]);
 
 
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 't1', title: 'Diseño Telemetría', description: 'Revisión de protocolos CAN.', priority: 'Alta', status: 'available', branch: 'Eléctrica', subteam: 'Telemetría', creditsValue: 50, icon: 'bolt', createdBy: 'u1', createdAt: new Date().toISOString() },
-    { id: 't2', title: 'Frenos Prototipo', description: 'Sangrado de frenos delantera.', priority: 'Alta', status: 'completed', branch: 'Mecánica', subteam: 'Parte Ciclo', creditsValue: 80, icon: 'handyman', createdBy: 'u2', createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), completedAt: new Date(Date.now() - 86400000).toISOString(), completedBy: 'Marta Sanz' },
-  ]);
+  useEffect(() => {
+    if (currentUser) {
+      // Fetch Tasks
+      supabase.from('tasks').select('*').then(({ data, error }) => {
+        if (!error && data) {
+          const mappedTasks: Task[] = data.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description,
+            priority: t.priority,
+            status: t.status,
+            branch: t.branch,
+            subteam: t.subteam,
+            creditsValue: t.credits_value || t.creditsValue || 0, // Handle both cases just in case
+            icon: t.icon || 'assignment',
+            assignedTo: t.assigned_to,
+            createdBy: t.created_by,
+            createdAt: t.created_at,
+            completedAt: t.completed_at,
+            completedBy: t.completed_by
+          }));
+          setTasks(mappedTasks);
+        }
+      });
+    }
+  }, [currentUser]);
+
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const [requests, setRequests] = useState<Request[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    { id: 'e1', title: 'Reunión General EPSA', start: new Date().toISOString(), branch: 'Global', type: 'meeting' },
-    { id: 'e2', title: 'Test Dinámico Circuit', start: new Date(Date.now() + 86400000 * 2).toISOString(), branch: 'Mecánica', type: 'meeting' },
-  ]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-  const [notifications, setNotifications] = useState<Notification[]>([
-    { id: 'n1', userId: 'all', title: 'Nuevo Portal', message: 'Optimización móvil y calendario inteligente activados.', read: false, createdAt: new Date().toISOString() }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const addNotification = (userId: string | 'all', title: string, message: string) => {
     const newNote = { id: Math.random().toString(36).substr(2, 9), userId, title, message, read: false, createdAt: new Date().toISOString() };
