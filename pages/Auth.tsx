@@ -28,6 +28,36 @@ const Auth: React.FC = () => {
   }, [formData.branch]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResendEmail = async () => {
+    if (!formData.email) {
+      setErrorMsg("Por favor, introduce tu correo electrónico primero.");
+      return;
+    }
+
+    setIsResending(true);
+    setErrorMsg(null);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: formData.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/#/verified`
+        }
+      });
+
+      if (error) {
+        setErrorMsg(error.message);
+      } else {
+        setErrorMsg("Se ha reenviado el enlace de confirmación a tu correo.");
+      }
+    } catch (err) {
+      setErrorMsg("Error al reenviar el correo de confirmación.");
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +131,7 @@ const Auth: React.FC = () => {
               status: shouldAutoApprove ? 'active' : 'pending',
               avatar_url: getRandomAvatar()
             },
-            emailRedirectTo: `${window.location.origin}/`
+            emailRedirectTo: `${window.location.origin}/#/verified`
           }
         });
 
@@ -260,9 +290,14 @@ const Auth: React.FC = () => {
                 {isLogin ? '¿Nuevo en el equipo? Crea tu solicitud' : '¿Ya tienes cuenta? Inicia sesión'}
               </button>
               {isLogin && (
-                <button onClick={() => { setIsReset(true); setErrorMsg(null); }} className="text-[10px] font-bold text-gray-600 hover:text-primary transition-colors uppercase tracking-widest">
-                  ¿Olvidaste tu contraseña?
-                </button>
+                <>
+                  <button onClick={() => { setIsReset(true); setErrorMsg(null); }} className="text-[10px] font-bold text-gray-600 hover:text-primary transition-colors uppercase tracking-widest">
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                  <button type="button" onClick={handleResendEmail} disabled={isResending} className="text-[10px] font-bold text-gray-600 hover:text-primary transition-colors uppercase tracking-widest">
+                    {isResending ? 'Reenviando...' : 'Reenviar email de confirmación'}
+                  </button>
+                </>
               )}
             </>
           ) : (

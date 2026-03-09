@@ -288,7 +288,10 @@ const App: React.FC = () => {
           <main className="flex-1 flex flex-col min-w-0 bg-background-dark relative overflow-hidden pb-24 md:pb-0">
             <Routes>
               {!currentUser ? (
-                <Route path="*" element={<Auth />} />
+                <>
+                  <Route path="/verified" element={<VerificationSuccess />} />
+                  <Route path="*" element={<Auth />} />
+                </>
               ) : (
                 <>
                   <Route path="/" element={<Dashboard />} />
