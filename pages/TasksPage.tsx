@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import { useApp } from '../App';
 import { Task, TaskStatus, Branch, TimeEntry } from '../types';
+import { supabase } from '../services/supabase';
 
 const TasksPage: React.FC = () => {
   const { tasks, setTasks, currentUser, setEntries, entries, setCurrentUser } = useApp();
@@ -24,7 +25,7 @@ const TasksPage: React.FC = () => {
   // "canPublish" is effectively "isLeader" in this context
   const canPublish = isLeader;
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     const task: Task = {
       id: Math.random().toString(36).substr(2, 9),
       ...newTask,
@@ -33,9 +34,41 @@ const TasksPage: React.FC = () => {
       createdBy: currentUser?.id || 'u0',
       createdAt: new Date().toISOString()
     };
+
+    // Optimistic UI update
     setTasks([...tasks, task]);
     setShowModal(false);
     setNewTask({ title: '', description: '', priority: 'Media', branch: currentUser?.branch || 'Mecánica', subteam: currentUser?.subteam || '' });
+
+    // Save task to Supabase database
+    const { error: insertError } = await supabase.from('tasks').insert([{
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      status: task.status,
+      branch: task.branch,
+      subteam: task.subteam, // Uses creator's subteam which makes sure it only goes to them
+      icon: task.icon,
+      created_by: task.createdBy,
+      created_at: task.createdAt
+    }]);
+
+    if (!insertError) {
+      // Send the email notification
+      const scope = task.subteam ? 'subteam' : 'branch';
+      const target = task.subteam || task.branch;
+      if (target) {
+        await supabase.rpc('send_broadcast_notification', {
+          title: `NUEVA TAREA: ${task.title}`,
+          body: `Se ha abierto una nueva tarea para ${target}: "${task.description}". Entra en la app para más detalles.`,
+          target_scope: scope,
+          target_value: target
+        });
+      }
+    } else {
+      console.error('Error inserting task:', insertError);
+    }
   };
 
   const handleAction = (tid: string, nextStatus: TaskStatus) => {

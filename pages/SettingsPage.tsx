@@ -4,8 +4,7 @@ import { useApp } from '../App';
 import { supabase } from '../services/supabase';
 import { ORGANIGRAMA } from '../constants';
 import { Branch } from '../types';
-import { messaging, VAPID_KEY } from '../services/firebase';
-import { getToken } from 'firebase/messaging';
+
 
 const SettingsPage: React.FC = () => {
   const { currentUser, logout } = useApp();
@@ -20,72 +19,6 @@ const SettingsPage: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
-  // Manual Notification Toggle State (Receiving)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [isLoadingNotifs, setIsLoadingNotifs] = useState(false);
-
-  // Check initial notification state
-  useEffect(() => {
-    const checkNotificationStatus = async () => {
-      if (!currentUser) return;
-
-      const { data } = await supabase
-        .from('user_fcm_tokens')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .single();
-
-      if (data) {
-        setNotificationsEnabled(true);
-      } else {
-        setNotificationsEnabled(false);
-      }
-    };
-
-    checkNotificationStatus();
-  }, [currentUser]);
-
-  // Handle Toggle (ON/OFF)
-  const handleToggleNotifications = async () => {
-    setIsLoadingNotifs(true);
-
-    if (!notificationsEnabled) {
-      // Turn ON
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-          if (token && currentUser) {
-            await supabase.from('user_fcm_tokens').upsert({
-              user_id: currentUser.id,
-              token: token,
-              platform: 'web'
-            });
-            setNotificationsEnabled(true);
-            console.log('FCM Token registered manually:', token);
-          }
-        } else {
-          alert("Las notificaciones están bloqueadas en tu navegador. Por favor, habilítalas en la configuración del sitio (candado url).");
-          setNotificationsEnabled(false);
-        }
-      } catch (err) {
-        console.error('Error enabling notifications:', err);
-        alert('Error al activar notificaciones.');
-      }
-    } else {
-      // Turn OFF
-      try {
-        if (currentUser) {
-          await supabase.from('user_fcm_tokens').delete().eq('user_id', currentUser.id);
-          setNotificationsEnabled(false);
-        }
-      } catch (err) {
-        console.error('Error disabling notifications:', err);
-      }
-    }
-
-    setIsLoadingNotifs(false);
-  };
 
   // Profile Image Logic
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,7 +64,7 @@ const SettingsPage: React.FC = () => {
   const isSubteamLead = currentUser?.role === 'team_lead' && currentUser?.subteam !== 'General';
 
   const availableScopes = [
-    ...(canSendGlobal ? [{ value: 'global', label: 'Toda la Escudería' }] : []),
+    ...(canSendGlobal ? [{ value: 'global', label: 'Todo el Equipo' }] : []),
     ...((canSendGlobal || isBranchLead) ? [{ value: 'branch', label: 'Por Rama' }] : []),
     { value: 'subteam', label: 'Por Subequipo' }
   ];
@@ -226,38 +159,6 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 2. Preferences (Notifications) */}
-          <div className="bg-[#141414] border border-white/5 rounded-3xl overflow-hidden shadow-lg">
-            <div className="p-4 border-b border-white/5 bg-white/[0.02]">
-              <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">General</h3>
-            </div>
-
-            {/* Notification Toggle Row */}
-            <div className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${notificationsEnabled ? 'bg-primary/20 text-primary' : 'bg-gray-800 text-gray-500'}`}>
-                  <span className="material-symbols-outlined">{notificationsEnabled ? 'notifications_active' : 'notifications_off'}</span>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white">Notificaciones Push</p>
-                  <p className="text-[10px] text-gray-500 font-medium mt-0.5">
-                    {notificationsEnabled ? 'Activas en este dispositivo' : 'Desactivadas'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Custom Switch Component */}
-              <button
-                onClick={handleToggleNotifications}
-                disabled={isLoadingNotifs}
-                className={`relative w-12 h-7 rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-[#141414] ${notificationsEnabled ? 'bg-primary' : 'bg-gray-700'}`}
-              >
-                <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-300 ease-out flex items-center justify-center ${notificationsEnabled ? 'translate-x-[20px]' : 'translate-x-0'}`}>
-                  {isLoadingNotifs && <div className="w-3 h-3 border-2 border-gray-300 border-t-primary rounded-full animate-spin"></div>}
-                </div>
-              </button>
-            </div>
-          </div>
 
           {/* 3. Comms Center (Accordion for Leaders) */}
           {['owner', 'coordinator', 'team_lead'].includes(currentUser?.role || '') && (
