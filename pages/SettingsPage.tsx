@@ -95,23 +95,58 @@ const SettingsPage: React.FC = () => {
     let finalValue = targetValue;
     if (finalValue.includes('(')) finalValue = finalValue.split(' (')[0];
 
-    const { error } = await supabase.rpc('send_broadcast_notification', {
-      title: notifTitle,
-      body: notifBody,
-      target_scope: isSubteamLead ? 'subteam' : targetScope,
-      target_value: isSubteamLead ? currentUser?.subteam : finalValue
-    });
+    const scope = isSubteamLead ? 'subteam' : targetScope;
+    const value = isSubteamLead ? (currentUser?.subteam ?? '') : finalValue;
 
-    if (error) {
-      alert(`Error: ${error.message}`);
-    } else {
-      alert('Notificación enviada con éxito.');
+    try {
+      // 1. Insert in-app notifications (existing behaviour)
+      const { error: rpcError } = await supabase.rpc('send_broadcast_notification', {
+        title: notifTitle,
+        body: notifBody,
+        target_scope: scope,
+        target_value: value,
+      });
+      if (rpcError) throw rpcError;
+
+      // 2. Send emails via gmail-sender Edge Function
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      const emailRes = await fetch(
+        'https://qijzycmrtiwqvvrfoahx.supabase.co/functions/v1/gmail-sender',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            title: notifTitle,
+            body: notifBody,
+            target_scope: scope,
+            target_value: value,
+          }),
+        }
+      );
+
+      if (!emailRes.ok) {
+        const errText = await emailRes.text();
+        console.warn('gmail-sender warning (non-blocking):', errText);
+        // Non-blocking: in-app notification succeeded, email failure is logged
+        alert(`Notificación enviada. ⚠️ Email no pudo enviarse: ${errText}`);
+      } else {
+        const emailData = await emailRes.json();
+        alert(`✅ Comunicado enviado a ${emailData.sentTo ?? '?'} persona(s) por correo.`);
+      }
+
       setNotifTitle('');
       setNotifBody('');
       setIsNotifOpen(false);
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
     }
     setSending(false);
   };
+
 
   // Password Reset
   const handlePasswordReset = async () => {
