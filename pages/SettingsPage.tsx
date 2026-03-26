@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '../components/Header';
 import { useApp } from '../App';
 import { supabase } from '../services/supabase';
 import { ORGANIGRAMA } from '../constants';
 import { Branch } from '../types';
 
+const SUPABASE_FUNCTIONS_URL = 'https://qijzycmrtiwqvvrfoahx.supabase.co/functions/v1';
 
 const SettingsPage: React.FC = () => {
   const { currentUser, logout } = useApp();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  // Notification State (Sending)
+  // Notification State
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
   const [targetScope, setTargetScope] = useState<'global' | 'branch' | 'subteam'>('branch');
-  const [targetValue, setTargetValue] = useState<string>('Eléctrica');
+  const [targetValue, setTargetValue] = useState<string>('');
   const [sending, setSending] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-
 
   // Profile Image Logic
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,48 +58,111 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  // Notification Sending Logic
-  const canSendGlobal = currentUser?.role === 'owner' || currentUser?.role === 'coordinator';
-  const isBranchLead = currentUser?.role === 'team_lead' && currentUser?.subteam === 'General';
-  const isSubteamLead = currentUser?.role === 'team_lead' && currentUser?.subteam !== 'General';
+  // ─── Notification Permission Logic ───────────────────────────────────────────
+  const role = currentUser?.role;
+  const userBranch = currentUser?.branch as Branch | undefined;
+  const userSubteam = currentUser?.subteam;
 
-  const availableScopes = [
-    ...(canSendGlobal ? [{ value: 'global', label: 'Todo el Equipo' }] : []),
-    ...((canSendGlobal || isBranchLead) ? [{ value: 'branch', label: 'Por Rama' }] : []),
-    { value: 'subteam', label: 'Por Subequipo' }
-  ];
+  // Owner / Coordinator → full access
+  const isAdmin = role === 'owner' || role === 'coordinator';
+  // Branch-level team_lead (subteam is "General" or "Coordinación")
+  const isBranchLead = role === 'team_lead' && (userSubteam === 'General' || userSubteam === 'Coordinación');
+  // Subteam-level team_lead (has a specific subteam)
+  const isSubteamLead = role === 'team_lead' && userSubteam && userSubteam !== 'General' && userSubteam !== 'Coordinación';
 
-  const getTargetOptions = () => {
+  const canSendNotifications = isAdmin || role === 'team_lead';
+
+  // Scopes available to each role
+  const availableScopes = isAdmin
+    ? [
+        { value: 'global', label: 'Todo el Equipo' },
+        { value: 'branch', label: 'Por Rama' },
+        { value: 'subteam', label: 'Por Subequipo' },
+      ]
+    : isBranchLead
+    ? [
+        { value: 'branch', label: `Rama: ${userBranch}` },
+        { value: 'subteam', label: 'Por Subequipo' },
+      ]
+    : []; // subteam leads have no scope selector (fixed)
+
+  // Values available for the chosen scope
+  const getTargetOptions = (): string[] => {
     if (targetScope === 'global') return [];
     if (targetScope === 'branch') {
-      if (canSendGlobal) return ['Eléctrica', 'Mecánica', 'Administración'];
-      if (isBranchLead) return [currentUser?.branch];
+      if (isAdmin) return ['Eléctrica', 'Mecánica', 'Administración'];
+      if (isBranchLead && userBranch) return [userBranch];
       return [];
     }
     if (targetScope === 'subteam') {
-      if (canSendGlobal) {
-        const allOptions: string[] = [];
-        Object.keys(ORGANIGRAMA).forEach(b => {
-          ORGANIGRAMA[b as Branch].forEach(s => allOptions.push(`${s} (${b})`));
+      if (isAdmin) {
+        const all: string[] = [];
+        Object.entries(ORGANIGRAMA).forEach(([b, subs]) => {
+          if (b !== 'General') subs.forEach(s => all.push(`${s} — ${b}`));
         });
-        return allOptions;
+        return all;
       }
-      if (isBranchLead) return ORGANIGRAMA[currentUser?.branch as Branch] || [];
-      if (isSubteamLead) return [currentUser?.subteam];
+      if (isBranchLead && userBranch) {
+        return ORGANIGRAMA[userBranch] || [];
+      }
+    }
+    return [];
+  };
+
+  // Resolve the actual value to send (strip branch label for admin subteam options)
+  const resolveTargetValue = (): string => {
+    if (isSubteamLead) return userSubteam ?? '';
+    if (targetScope === 'branch') {
+      if (isAdmin) return targetValue;
+      return userBranch ?? '';
+    }
+    if (targetScope === 'subteam') {
+      // Admin has "Subequipo — Rama" format, extract "Subequipo"
+      if (isAdmin && targetValue.includes(' — ')) return targetValue.split(' — ')[0];
+      return targetValue;
+    }
+    return targetValue;
+  };
+
+  // When scope changes, reset targetValue to first valid option
+  const handleScopeChange = (scope: 'global' | 'branch' | 'subteam') => {
+    setTargetScope(scope);
+    if (scope === 'global') {
+      setTargetValue('');
+    } else if (scope === 'branch') {
+      const opts = isAdmin ? ['Eléctrica', 'Mecánica', 'Administración'] : [userBranch ?? ''];
+      setTargetValue(opts[0] ?? '');
+    } else {
+      const opts = getTargetOptionsForScope(scope);
+      setTargetValue(opts[0] ?? '');
+    }
+  };
+
+  const getTargetOptionsForScope = (scope: string): string[] => {
+    if (scope === 'branch') {
+      return isAdmin ? ['Eléctrica', 'Mecánica', 'Administración'] : [userBranch ?? ''];
+    }
+    if (scope === 'subteam') {
+      if (isAdmin) {
+        const all: string[] = [];
+        Object.entries(ORGANIGRAMA).forEach(([b, subs]) => {
+          if (b !== 'General') subs.forEach(s => all.push(`${s} — ${b}`));
+        });
+        return all;
+      }
+      return isBranchLead && userBranch ? (ORGANIGRAMA[userBranch] || []) : [];
     }
     return [];
   };
 
   const handleSendNotification = async () => {
     setSending(true);
-    let finalValue = targetValue;
-    if (finalValue.includes('(')) finalValue = finalValue.split(' (')[0];
 
     const scope = isSubteamLead ? 'subteam' : targetScope;
-    const value = isSubteamLead ? (currentUser?.subteam ?? '') : finalValue;
+    const value = resolveTargetValue();
 
     try {
-      // 1. Insert in-app notifications (existing behaviour)
+      // 1. In-app notification (RPC)
       const { error: rpcError } = await supabase.rpc('send_broadcast_notification', {
         title: notifTitle,
         body: notifBody,
@@ -108,34 +171,31 @@ const SettingsPage: React.FC = () => {
       });
       if (rpcError) throw rpcError;
 
-      // 2. Send emails via gmail-sender Edge Function
+      // 2. Email via gmail-sender Edge Function
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
-      const emailRes = await fetch(
-        'https://qijzycmrtiwqvvrfoahx.supabase.co/functions/v1/gmail-sender',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            title: notifTitle,
-            body: notifBody,
-            target_scope: scope,
-            target_value: value,
-          }),
-        }
-      );
+
+      const emailRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/gmail-sender`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          title: notifTitle,
+          body: notifBody,
+          target_scope: scope,
+          target_value: value,
+        }),
+      });
 
       if (!emailRes.ok) {
         const errText = await emailRes.text();
-        console.warn('gmail-sender warning (non-blocking):', errText);
-        // Non-blocking: in-app notification succeeded, email failure is logged
-        alert(`Notificación enviada. ⚠️ Email no pudo enviarse: ${errText}`);
+        console.warn('gmail-sender (non-blocking):', errText);
+        alert(`Notificación in-app enviada. ⚠️ Email fallido: ${errText}`);
       } else {
         const emailData = await emailRes.json();
-        alert(`✅ Comunicado enviado a ${emailData.sentTo ?? '?'} persona(s) por correo.`);
+        alert(`✅ Comunicado enviado a ${emailData.sentTo ?? '?'} persona(s).`);
       }
 
       setNotifTitle('');
@@ -144,9 +204,9 @@ const SettingsPage: React.FC = () => {
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     }
+
     setSending(false);
   };
-
 
   // Password Reset
   const handlePasswordReset = async () => {
@@ -162,7 +222,6 @@ const SettingsPage: React.FC = () => {
     <div className="flex-1 flex flex-col h-full bg-[#0a0a0a]">
       <Header title="Configuración" />
 
-      {/* Main Content Area - Mobile First Centered Layout */}
       <div className="flex-1 overflow-y-auto custom-scroll p-4 pb-32">
         <div className="max-w-md mx-auto space-y-6">
 
@@ -191,19 +250,24 @@ const SettingsPage: React.FC = () => {
               <span className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] uppercase font-black tracking-widest text-primary">
                 {currentUser?.branch}
               </span>
+              {userSubteam && userSubteam !== 'General' && (
+                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] uppercase font-black tracking-widest text-gray-500">
+                  {userSubteam}
+                </span>
+              )}
             </div>
           </div>
 
 
-          {/* 3. Comms Center (Accordion for Leaders) */}
-          {['owner', 'coordinator', 'team_lead'].includes(currentUser?.role || '') && (
+          {/* 2. Comms Center (only for leaders) */}
+          {canSendNotifications && (
             <div className="bg-[#141414] border border-white/5 rounded-3xl overflow-hidden shadow-lg transition-all">
               <button
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
                 className="w-full p-4 flex items-center justify-between bg-white/[0.02] hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
+                  <div className="w-8 h-8 rounded-full bg-[#00cc88]/20 flex items-center justify-center text-[#00cc88]">
                     <span className="material-symbols-outlined text-sm">campaign</span>
                   </div>
                   <div className="text-left">
@@ -215,50 +279,58 @@ const SettingsPage: React.FC = () => {
               </button>
 
               {isNotifOpen && (
-                <div className="p-4 space-y-4 border-t border-white/5 animate-in slide-in-from-top-2">
+                <div className="p-4 space-y-3 border-t border-white/5 animate-in slide-in-from-top-2">
                   <input
                     value={notifTitle}
                     onChange={e => setNotifTitle(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-orange-500/50 outline-none placeholder-gray-600"
-                    placeholder="Título del anuncio..."
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[#00cc88]/50 outline-none placeholder-gray-600"
+                    placeholder="Título del comunicado..."
                   />
 
-                  {!isSubteamLead ? (
+                  {/* Scope selector — only for admins and branch leads */}
+                  {isSubteamLead ? (
+                    <div className="bg-[#00cc88]/10 border border-[#00cc88]/20 rounded-xl p-3 text-xs text-[#00cc88] font-bold text-center">
+                      Destino: {userSubteam} ({userBranch})
+                    </div>
+                  ) : (
                     <div className="flex gap-2">
+                      {/* Scope picker */}
                       <select
                         value={targetScope}
-                        onChange={e => setTargetScope(e.target.value as any)}
-                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-3 text-xs text-white focus:border-orange-500/50 outline-none flex-1"
+                        onChange={e => handleScopeChange(e.target.value as any)}
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-3 text-xs text-white focus:border-[#00cc88]/50 outline-none flex-1"
                       >
-                        {availableScopes.map(s => <option key={s.value} value={s.value} className="bg-[#1a1a1a]">{s.label}</option>)}
+                        {availableScopes.map(s => (
+                          <option key={s.value} value={s.value} className="bg-[#1a1a1a]">{s.label}</option>
+                        ))}
                       </select>
-                      {targetScope !== 'global' && (
+
+                      {/* Value picker (hidden for global) */}
+                      {targetScope !== 'global' && getTargetOptions().length > 0 && (
                         <select
                           value={targetValue}
                           onChange={e => setTargetValue(e.target.value)}
-                          className="bg-black/40 border border-white/10 rounded-xl px-3 py-3 text-xs text-white focus:border-orange-500/50 outline-none flex-1"
+                          className="bg-black/40 border border-white/10 rounded-xl px-3 py-3 text-xs text-white focus:border-[#00cc88]/50 outline-none flex-1"
                         >
-                          {getTargetOptions().map(o => <option key={o} value={o} className="bg-[#1a1a1a]">{o}</option>)}
+                          {getTargetOptions().map(o => (
+                            <option key={o} value={o} className="bg-[#1a1a1a]">{o}</option>
+                          ))}
                         </select>
                       )}
-                    </div>
-                  ) : (
-                    <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3 text-xs text-orange-400 font-bold text-center">
-                      Destino: {currentUser?.subteam}
                     </div>
                   )}
 
                   <textarea
                     value={notifBody}
                     onChange={e => setNotifBody(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-orange-500/50 outline-none h-24 resize-none placeholder-gray-600"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[#00cc88]/50 outline-none h-24 resize-none placeholder-gray-600"
                     placeholder="Escribe el mensaje aquí..."
                   />
 
                   <button
                     onClick={handleSendNotification}
                     disabled={sending || !notifTitle || !notifBody}
-                    className="w-full py-3 bg-orange-500 hover:bg-orange-400 text-black font-bold uppercase text-xs tracking-widest rounded-xl transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 bg-[#00cc88] hover:bg-[#00b377] text-black font-bold uppercase text-xs tracking-widest rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {sending ? 'Enviando...' : 'Enviar Ahora'}
                     <span className="material-symbols-outlined text-sm">send</span>
@@ -268,7 +340,7 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
 
-          {/* 4. Security & Logout */}
+          {/* 3. Security & Logout */}
           <div className="bg-[#141414] border border-white/5 rounded-3xl overflow-hidden shadow-lg">
             <div className="p-4 border-b border-white/5 bg-white/[0.02]">
               <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Seguridad</h3>
