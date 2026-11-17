@@ -195,7 +195,7 @@ const TechnicalSpecs: React.FC = () => {
     };
 
     // Mobile Card Logic
-    const SpecCard = ({ spec }: { spec: MotoSpec }) => (
+    const SpecCard: React.FC<{ spec: MotoSpec }> = ({ spec }) => (
         <div
             id={`spec-${spec.id}`}
             className={`bg-[#141414] border border-white/5 rounded-2xl p-4 shadow-lg mb-4 ${highlightedId === spec.id ? 'ring-2 ring-primary ring-opacity-50' : ''}`}

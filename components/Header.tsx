@@ -26,6 +26,8 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
 
   const markAsRead = (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    // Persist read state to Supabase
+    supabase.from('notifications').update({ read: true }).eq('id', id).then(() => {});
   };
 
   // Debounced Search (Unified)
@@ -183,7 +185,7 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
             </button>
 
             {showNotes && (
-              <div className="absolute top-12 right-0 w-80 max-h-[400px] bg-card-dark border border-white/10 rounded-2xl shadow-2xl flex flex-col z-[100] animate-in slide-in-from-top-2 overflow-hidden">
+              <div className="absolute top-12 right-0 w-80 max-w-[calc(100vw-24px)] max-h-[400px] bg-card-dark border border-white/10 rounded-2xl shadow-2xl flex flex-col z-[100] animate-in slide-in-from-top-2 overflow-hidden">
                 <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#1a1a1a]">
                   <span className="text-xs font-black uppercase tracking-widest">Bandeja de Entrada</span>
                   <button onClick={() => setShowNotes(false)} className="text-gray-500 hover:text-white"><span className="material-symbols-outlined text-sm">close</span></button>

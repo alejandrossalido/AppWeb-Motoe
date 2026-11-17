@@ -246,6 +246,55 @@ const App: React.FC = () => {
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  // Load notifications from Supabase on login + realtime subscription
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchNotifications = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (!error && data) {
+        setNotifications(data.map((n: any) => ({
+          id: n.id,
+          userId: n.user_id,
+          title: n.title,
+          message: n.body,
+          read: n.read ?? false,
+          createdAt: n.created_at,
+        })));
+      }
+    };
+
+    fetchNotifications();
+
+    // Realtime: receive new notifications without reload
+    const channel = supabase
+      .channel('notifications_realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${currentUser.id}` },
+        (payload) => {
+          const n = payload.new as any;
+          setNotifications(prev => [{
+            id: n.id,
+            userId: n.user_id,
+            title: n.title,
+            message: n.body,
+            read: false,
+            createdAt: n.created_at,
+          }, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser?.id]);
+
   const addNotification = (userId: string | 'all', title: string, message: string) => {
     const newNote = { id: Math.random().toString(36).substr(2, 9), userId, title, message, read: false, createdAt: new Date().toISOString() };
     setNotifications(prev => [newNote, ...prev]);

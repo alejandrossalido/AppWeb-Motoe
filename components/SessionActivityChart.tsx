@@ -130,7 +130,7 @@ const SessionActivityChart: React.FC = () => {
         return () => clearInterval(interval);
     }, [timeFrame]);
 
-    const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+    const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-neutral-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl shadow-2xl">
