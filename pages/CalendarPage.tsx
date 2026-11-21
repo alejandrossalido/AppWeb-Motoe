@@ -123,9 +123,16 @@ const CalendarPage: React.FC = () => {
     setCurrentMonth(next);
   };
 
-  const setSpecificMonth = (monthIndex: number) => {
+  const setSpecificMonth = (monthIndex: number, year?: number) => {
     const next = new Date(currentMonth);
+    if (year !== undefined) next.setFullYear(year);
     next.setMonth(monthIndex);
+    setCurrentMonth(next);
+  };
+
+  const setSpecificYear = (year: number) => {
+    const next = new Date(currentMonth);
+    next.setFullYear(year);
     setCurrentMonth(next);
   };
 
@@ -196,21 +203,41 @@ const CalendarPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Quick Season Jump Pills (Feb to Nov) */}
-            <div className="hidden xl:flex items-center gap-1 bg-white/[0.03] p-1 rounded-2xl border border-white/5">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(mIdx => (
-                <button
-                  key={mIdx}
-                  onClick={() => setSpecificMonth(mIdx)}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase transition-all ${
-                    currentMonth.getMonth() === mIdx
-                      ? 'bg-primary text-black font-black shadow-glow'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {MONTH_NAMES[mIdx].slice(0, 3)}
-                </button>
-              ))}
+            {/* Quick Year & Month Selector */}
+            <div className="hidden lg:flex items-center gap-1.5">
+              {/* Year Selector */}
+              <div className="flex items-center gap-0.5 bg-white/[0.03] p-1 rounded-2xl border border-white/5">
+                {[2025, 2026, 2027].map(yr => (
+                  <button
+                    key={yr}
+                    onClick={() => setSpecificYear(yr)}
+                    className={`px-2 py-1 rounded-xl text-[10px] font-black transition-all ${
+                      currentMonth.getFullYear() === yr
+                        ? 'bg-white/20 text-white font-black'
+                        : 'text-gray-500 hover:text-gray-300'
+                    }`}
+                  >
+                    {yr}
+                  </button>
+                ))}
+              </div>
+
+              {/* Month Pills */}
+              <div className="flex items-center gap-0.5 bg-white/[0.03] p-1 rounded-2xl border border-white/5">
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(mIdx => (
+                  <button
+                    key={mIdx}
+                    onClick={() => setSpecificMonth(mIdx)}
+                    className={`px-2 py-1 rounded-xl text-[10px] font-bold uppercase transition-all ${
+                      currentMonth.getMonth() === mIdx
+                        ? 'bg-primary text-black font-black shadow-glow'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {MONTH_NAMES[mIdx].slice(0, 3)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
